@@ -51,8 +51,8 @@ class MainWindow(QMainWindow):
         self.logo.setScaledContents(True)
         self.logo.setFixedSize(64, 50)
 
-        self.cur_img_header = "src/icon/right_panel_close.png"
-        self.button = Button("", min=33, image_path=self.cur_img_header, ratio=28, scale=2, alpha=[0, 0, 0])
+        self.cur_img_header = "src/icon/left_panel_close.svg"
+        self.button = Button("", min=33, svg_path=self.cur_img_header, ratio=28, scale=2, alpha=[0, 0, 0])
         self.button.clicked.connect(self.toggle_sideboard)
 
         space = QSpacerItem(150, 0, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
@@ -67,34 +67,34 @@ class MainWindow(QMainWindow):
         self.main = BaseFrame(border=0, box=QVBoxLayout())
         self.main.mainLayout.setContentsMargins(0, 0, 0, 0)
 
-        button_home = Button("Обзор", min=64, image_path="src/icon/home.png", ratio=28, scale=2, font_size=20,
+        button_home = Button("Обзор", min=64, svg_path="src/icon/home.svg", ratio=28, scale=2, font_size=20,
                              radius=20, alpha=[0, 50, 100])
         button_home.setBackgroundHover()
         button_home.clicked.connect(lambda: print(42))
         sidebar_buttons.append(button_home)
 
-        button_application = Button("Приложения", min=64, image_path="src/icon/computer.png", ratio=28, scale=2,
+        button_application = Button("Приложения", min=64, svg_path="src/icon/computer.svg", ratio=28, scale=2,
                                     font_size=20, alpha=[0, 50, 100], radius=20)
         button_application.clicked.connect(lambda: print(42))
         sidebar_buttons.append(button_application)
 
-        button_limit = Button("Лимиты", min=64, image_path="src/icon/hourglass.png", ratio=28, scale=2, font_size=20,
+        button_limit = Button("Лимиты", min=64, svg_path="src/icon/hourglass.svg", ratio=28, scale=2, font_size=20,
                               alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_limit)
 
-        button_focus = Button("Фокус", min=64, image_path="src/icon/focus.png", ratio=28, scale=2, font_size=20,
+        button_focus = Button("Фокус", min=64, svg_path="src/icon/focus.svg", ratio=28, scale=2, font_size=20,
                               alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_focus)
 
-        button_stat = Button("Статистика", min=64, image_path="src/icon/statistic.png", ratio=28, scale=2, font_size=20,
+        button_stat = Button("Статистика", min=64, svg_path="src/icon/statistic.svg", ratio=28, scale=2, font_size=20,
                              alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_stat)
 
-        button_history = Button("История", min=64, image_path="src/icon/history.png", ratio=28, scale=2, font_size=20,
+        button_history = Button("История", min=64, svg_path="src/icon/history.svg", ratio=28, scale=2, font_size=20,
                                 alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_history)
 
-        button_settings = Button("Настройки", min=64, image_path="src/icon/settings.png", ratio=28, scale=2,
+        button_settings = Button("Настройки", min=64, svg_path="src/icon/settings.svg", ratio=28, scale=2,
                                  font_size=20, alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_settings)
 
@@ -124,12 +124,12 @@ class MainWindow(QMainWindow):
             start_width = self.sidebar.width()
             end_width = 55 if not self.is_small else 200
 
-            if self.cur_img_header == "src/icon/right_panel_open.png":
-                self.button.setPixmap("src/icon/right_panel_close.png")
-                self.cur_img_header = "src/icon/right_panel_close.png"
+            if self.cur_img_header == "src/icon/left_panel_open.svg":
+                self.button.setImage("src/icon/left_panel_close.svg")
+                self.cur_img_header = "src/icon/left_panel_close.svg"
             else:
-                self.button.setPixmap("src/icon/right_panel_open.png")
-                self.cur_img_header = "src/icon/right_panel_open.png"
+                self.button.setImage("src/icon/left_panel_open.svg")
+                self.cur_img_header = "src/icon/left_panel_open.svg"
 
             animation = QPropertyAnimation(self.sidebar, b"maximumWidth")
             animation.setDuration(300)

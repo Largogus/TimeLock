@@ -1,3 +1,4 @@
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QPushButton, QGraphicsDropShadowEffect
 from PySide6.QtCore import Qt, QRectF, QPropertyAnimation, Property
 from PySide6.QtGui import QPainter, QBrush, QColor, QPen, QPixmap, QFont
@@ -10,11 +11,11 @@ class Button(QPushButton):
                  min: int = 165,
                  max: int = 500,
                  alpha: list[int, int, int] = None,
-                 image_path: str = None,
+                 svg_path: str = None,
                  ratio: int = 2,
                  scale: int = 0,
                  icon_size: int = 24,
-                 margin: int = 12,
+                 margin: int = 6,
                  indicator: bool = False):
         super().__init__()
 
@@ -49,7 +50,7 @@ class Button(QPushButton):
 
         self.setMouseTracking(True)
 
-        self.pixmap = QPixmap(image_path) if image_path else None
+        self.renderer = QSvgRenderer(svg_path) if svg_path else None
 
         if self.INDICATOR:
             self.indicator_anim = QPropertyAnimation(self, b"indicatorColor")
@@ -78,19 +79,16 @@ class Button(QPushButton):
 
         paint.drawRoundedRect(draw_rect, self.RADIUS, self.RADIUS)
 
-        if self.pixmap:
-            scaled_pixmap = self.pixmap.scaled(
+        if self.renderer:
+            icon_rect = QRectF(
+                self.MARGIN,
+                (rect.height() - self.ICON_SIZE) / 2,
                 self.ICON_SIZE,
-                self.ICON_SIZE,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
+                self.ICON_SIZE
             )
+            self.renderer.render(paint, icon_rect)
 
-            x = (rect.width() - scaled_pixmap.width()) // self.RATIO
-            y = (rect.height() - scaled_pixmap.height()) // 2
-            paint.drawPixmap(x + (self.SCALE * 2), y, scaled_pixmap)
-
-        if self.pixmap:
+        if self.renderer:
             text_rect = QRectF(draw_rect)
             text_rect.setLeft(rect.left() + (10 * 4))
         else:
@@ -111,8 +109,8 @@ class Button(QPushButton):
         paint.setClipRect(text_rect)
         paint.drawText(text_rect, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self.name)
 
-    def setPixmap(self, path: str):
-        self.pixmap = QPixmap(path)
+    def setImage(self, path: str):
+        self.renderer = QSvgRenderer(path)
         self.update()
 
     def setBackgroundColor(self, color: QColor = QColor('#B6B6B6')):
