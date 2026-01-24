@@ -1,0 +1,108 @@
+from PySide6.QtCore import Qt, QRectF, QSize
+from PySide6.QtGui import QPainter, QPainterPath, QPen, QColor, QBrush, QFont
+from PySide6.QtWidgets import QVBoxLayout, QSlider, QWidget, QApplication
+from core.system.date import normal_time, to_time, plural
+
+
+class CircleProgressBar(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.progress = 0
+        self.limit = 43200 # потом на 0
+        self.setMinimumSize(50, 50)
+        self.setMaximumSize(250, 250)
+
+        self.time = ""
+
+    def upd(self, post_progress):
+        if self.progress == post_progress:
+            return
+        self.progress = post_progress
+        self.time = normal_time(self.progress)
+        self.update()
+
+    def setLimit(self, new_limit):
+        self.limit = new_limit
+        self.update()
+
+    def progressColor(self) -> QColor:
+        percent = self.progress * 100
+
+        if percent <= 25:
+            return QColor("#4CAF50")
+        elif percent <= 50:
+            return QColor("#1c731f")
+        elif percent <= 75:
+            return QColor("#FFEB3B")
+        elif 75 < percent <= 100:
+            return QColor("#F44336")
+        else:
+            return QColor("#F44336")
+
+    def paintEvent(self, event):
+        if self.height() > self.width():
+            self.setFixedWidth(self.height())
+        if self.width() > self.height():
+            self.setFixedHeight(self.width())
+
+        if self.limit != 0:
+            progress_degree = (self.progress / self.limit) * 360
+        else:
+            progress_degree = (self.progress / 86400) * 360
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        margin = self.width() / 10
+        pen_width = self.width() / 25
+
+        rect = QRectF(
+            margin / 2,
+            margin / 2,
+            self.width() - margin,
+            self.height() - margin
+        )
+
+        bg_pen = QPen(Qt.GlobalColor.gray)
+        bg_pen.setWidth(pen_width)
+        bg_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+
+        painter.setPen(bg_pen)
+        painter.drawArc(rect, 0, 460 * 16)
+
+        progress_pen = QPen(self.progressColor())
+        progress_pen.setWidth(pen_width)
+        progress_pen.setCapStyle(Qt.PenCapStyle.RoundCap)
+
+        painter.setPen(progress_pen)
+        painter.drawArc(rect, 90 * 16, -progress_degree * 16)
+
+        font = QFont()
+        font.setPointSize(int(self.height() / 16))
+
+        painter.setFont(font)
+        painter.setPen(Qt.GlobalColor.white)
+
+        text = self.time
+
+        if self.limit == 0:
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, text)
+        else:
+            text_rect_s = QRectF(rect)
+            text_rect_s.setTop(rect.top() + 20)
+
+            text_rect_l = QRectF(rect)
+            text_rect_l.setTop(rect.top() - 15)
+
+            painter.drawText(text_rect_l, Qt.AlignmentFlag.AlignCenter, text)
+
+            font.setPointSize(int(self.height() / 24))
+            painter.setFont(font)
+
+            h = to_time(self.limit)
+            t_h = plural(h, ("час", "часа", "часов"))
+
+            painter.drawText(text_rect_s, Qt.AlignmentFlag.AlignCenter, f"из {h} {t_h}")
+
+    def sizeHint(self) -> QSize:
+        return QSize(260, 260)

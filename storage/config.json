@@ -1,0 +1,19 @@
+{
+  "first_start": false,
+  "database_url": "sqlite:///storage/tracker.db",
+  "system_process": [
+    "svchost.exe",
+    "runtimebroker.exe",
+    "dllhost.exe",
+    "conhost.exe",
+    "taskhostw.exe",
+    "systemsettings.exe",
+    "textinputhost.exe",
+    "windowsterminalhost.exe",
+    "windowsterminal.exe"
+  ],
+  "friendly_process": {
+    "Notepad.exe": "Блокнот",
+    "mspaint.exe": "Paint"
+  }
+}

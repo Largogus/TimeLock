@@ -8,7 +8,7 @@ class SlotPopUp(QListWidget):
     itemClicked = Signal(str)
 
     def __init__(self,
-                 item: list = None,
+                 item: set = None,
                  background: QColor = QColor(255, 255, 255),
                  border: int = 6,
                  font_size: int = 16,
@@ -56,7 +56,7 @@ class SlotPopUp(QListWidget):
         self.hide()
         super().mousePressEvent(event)
 
-    def _getItem(self, new_items: list):
+    def _getItem(self, new_items: set):
         self.clear()
         self.list = new_items
 
@@ -92,6 +92,7 @@ class PopUp(QWidget):
         self.BORDER_RADIUS = border_radius
         self.FONT_SIZE = font_size
         self.slot_bg = slot_bg
+        self._error = False
 
         self.hovered = False
 
@@ -125,12 +126,16 @@ class PopUp(QWidget):
         painter.setPen(QPen(Qt.PenStyle.NoPen))
         painter.drawRoundedRect(rect, self.BORDER_RADIUS, self.BORDER_RADIUS)
 
-        painter.setPen(Qt.GlobalColor.black)
-
         font = painter.font()
         font.setPixelSize(self.FONT_SIZE)
         painter.setFont(font)
 
+        if self._error:
+            rect.adjust(2, 2, -2, -2)
+            painter.setPen(QPen(QColor("red"), 2))
+            painter.drawRoundedRect(rect, self.BORDER_RADIUS, self.BORDER_RADIUS)
+
+        painter.setPen(Qt.GlobalColor.black)
         painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, self.TEXT)
 
     def mousePressEvent(self, event):
@@ -158,6 +163,11 @@ class PopUp(QWidget):
         self.hovered = False
         self.update()
         super().leaveEvent(event)
+
+    def setError(self, value: bool):
+        self._error = value
+
+        self.update()
 
 
 class MyDelegate(QStyledItemDelegate):

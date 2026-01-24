@@ -1,16 +1,15 @@
 from PySide6.QtWidgets import QScrollArea, QVBoxLayout, QWidget
 from PySide6.QtGui import QColor, QPainter, QPen, QBrush, Qt
 from Widgets.TableItem import TableItem
-from core.json_manager import read
+from core.models.models import App, Blacklist
+from core.db.session import SessionLocal
+from sqlalchemy import exists, select
 import os
 
 
 class Table(QScrollArea):
     def __init__(self):
         super().__init__()
-
-        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        path_file = os.path.join(project_root, 'storage', 'monitored_app.json')
 
         self.BACKGROUND_COLOR = QColor('#CFCFCF')
         self.RADIUS = 10
@@ -20,11 +19,12 @@ class Table(QScrollArea):
         container = QWidget()
         layout = QVBoxLayout(container)
 
-        json_txt = read(path_file)
+        with SessionLocal() as s:
+            apps = s.query(App).filter(~exists(select(1).where(Blacklist.app_id == App.id))).all()
 
-        for i in json_txt:
-            title = json_txt[i].get('title', "Undefined")
-            path = json_txt[i].get('path', "Undefined")
+        for app in apps:
+            title = app.name
+            path = app.path or "./path"
             layout.addWidget(TableItem(self.viewport(), title, path))
             layout.setSpacing(10)
 

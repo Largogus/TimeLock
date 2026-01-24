@@ -1,97 +1,79 @@
-from PySide6.QtWidgets import QTextEdit, QFrame, QMenu
-from PySide6.QtGui import QColor, QPainter, QBrush, Qt, QFont, QAction
+from PySide6.QtWidgets import QLineEdit, QFrame, QMenu
+from PySide6.QtCore import QSize
+from PySide6.QtGui import QColor, QPainter, QBrush, Qt, QFont, QAction, QPen
 
 
-class TextEdit(QTextEdit):
-    def __init__(self, border: int = 16, max_char: int = 300, place: str = ""):
+class TextEdit(QLineEdit):
+    def __init__(
+        self,
+        placeholder: str = "",
+        max_char: int = 300,
+        border_radius: int = 16,
+        background: QColor = QColor("#AFAFAF"),
+    ):
+
         super().__init__()
 
-        self._border = border
-        self._background = QColor('#B6B6B6')
+        self._bg = background
+        self._border = border_radius
+        self._error = False
 
-        self.max_char = max_char
-
-        self.setFrameStyle(QFrame.Shape.NoFrame)
+        self.setFrame(False)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+        self.setPlaceholderText(placeholder)
+        self.setMaxLength(max_char)
 
-        font = QFont("Arial", (self.height() // 2) - 1)
-        self.setFont(font)
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self.setStyleSheet("QLineEdit { background: transparent; }")
 
-        self.setPlaceholderText(place)
+        self.setContentsMargins(0, 0, 0, 0)
 
-        self.textChanged.connect(self.check_len)
+    def resizeEvent(self, event):
+        h = self.height()
+        if h > 10:
+            self.setFont(QFont("Arial", int(h * 0.45)))
+        super().resizeEvent(event)
 
-    def setMaximum(self, size: int):
-        self.setMaximumHeight(size)
-
-        font = QFont("Arial", (self.height() // 2))
-        self.setFont(font)
-
+    def setError(self, value: bool):
+        self._error = value
         self.update()
 
-    def check_len(self):
-        text = self.toPlainText()
-
-        if len(text) > self.max_char:
-            self.setPlainText(text[:self.max_char])
-            cursor = self.textCursor()
-            pos = cursor.position()
-            self.blockSignals(True)
-            self.setPlainText(text[:self.max_char])
-            cursor.setPosition(max(pos, self.max_char))
-            self.setTextCursor(cursor)
-            self.blockSignals(False)
-
     def paintEvent(self, event):
-        painter = QPainter(self.viewport())
+        painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         rect = self.rect()
 
-        painter.setBrush((QBrush(self._background)))
+        painter.setBrush(QBrush(self._bg))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(rect, self._border, self._border)
 
+        if self._error:
+            rect.adjust(2, 2, -2, -2)
+            painter.setPen(QPen(QColor("red"), 2))
+            painter.drawRoundedRect(rect, self._border, self._border)
+
+
         super().paintEvent(event)
 
-    def setText(self, text):
-        super().setText(text)
-        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    def sizeHint(self) -> QSize:
+        return QSize(300, 60)
 
     def contextMenuEvent(self, event):
         menu = QMenu(self)
 
-        undo_action = QAction("Отменить", self)
-        undo_action.triggered.connect(self.undo)
-        menu.addAction(undo_action)
+        actions = [
+            ("Отменить", self.undo),
+            ("Вырезать", self.cut),
+            ("Копировать", self.copy),
+            ("Вставить", self.paste),
+            ("Удалить", self.clear),
+            ("Выделить всё", self.selectAll),
+        ]
 
-        redo_action = QAction("Повторить", self)
-        redo_action.triggered.connect(self.redo)
-        menu.addAction(redo_action)
-
-        menu.addSeparator()
-
-        cut_action = QAction("Вырезать", self)
-        cut_action.triggered.connect(self.cut)
-        menu.addAction(cut_action)
-
-        copy_action = QAction("Копировать", self)
-        copy_action.triggered.connect(self.copy)
-        menu.addAction(copy_action)
-
-        paste_action = QAction("Вставить", self)
-        paste_action.triggered.connect(self.paste)
-        menu.addAction(paste_action)
-
-        delete_action = QAction("Удалить", self)
-        delete_action.triggered.connect(self.textCursor().removeSelectedText)
-        menu.addAction(delete_action)
-
-        menu.addSeparator()
-
-        select_all_action = QAction("Выделить всё", self)
-        select_all_action.triggered.connect(self.selectAll)
-        menu.addAction(select_all_action)
+        for text, slot in actions:
+            act = QAction(text, self)
+            act.triggered.connect(slot)
+            menu.addAction(act)
 
         menu.exec(event.globalPos())
