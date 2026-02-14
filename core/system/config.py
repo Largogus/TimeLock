@@ -22,11 +22,18 @@ def load_config() -> dict:
 
 
 def validate_config(config):
-    required_keys = ["first_start", "database_url", "system_process", "friendly_process"]
+    required_keys = ["first_start",
+                     "database_url",
+                     "system_process",
+                     "friendly_process",
+                     "ui"]
+
     for key in required_keys:
         if key not in config:
             raise KeyError(f"В конфиге отсутствует ключ: '{key}'")
 
+    if not isinstance(config["ui"], dict):
+        raise TypeError("'ui' должен быть словарём")
     if not isinstance(config["system_process"], list):
         raise TypeError("'system_process' должен быть списком")
     if not isinstance(config["friendly_process"], dict):
@@ -36,7 +43,6 @@ def validate_config(config):
 
 
 _config = load_config()
-print(_config)
 
 DATABASE_PATH = _config['database_url']
 
@@ -44,9 +50,12 @@ SYSTEM_PROCESS = _config['system_process']
 
 FRIENDLY_PROCESS = _config['friendly_process']
 
+FONT_FAMILY = _config["ui"]["font_family"]
+
 
 __all__ = (
     "DATABASE_PATH",
     "SYSTEM_PROCESS",
-    'FRIENDLY_PROCESS'
+    'FRIENDLY_PROCESS',
+    "FONT_FAMILY"
 )

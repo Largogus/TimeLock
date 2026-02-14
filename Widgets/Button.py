@@ -1,23 +1,28 @@
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import QPushButton, QGraphicsDropShadowEffect
+from PySide6.QtWidgets import QPushButton, QSizePolicy
 from PySide6.QtCore import Qt, QRectF, QPropertyAnimation, Property
-from PySide6.QtGui import QPainter, QBrush, QColor, QPen, QPixmap, QFont
+from PySide6.QtGui import QPainter, QBrush, QColor, QFont
 
 
 class Button(QPushButton):
     def __init__(self, name: str,
                  font_size: int = 14,
+                 font_color: Qt.GlobalColor | QColor = Qt.GlobalColor.black,
                  radius: int = 15,
                  min: int = 165,
-                 max: int = 500,
+                 maxs: int = 500,
                  alpha: list[int, int, int] = None,
                  svg_path: str = None,
                  ratio: int = 2,
                  scale: int = 0,
                  icon_size: int = 24,
                  margin: int = 6,
-                 indicator: bool = False):
+                 indicator: bool = False,
+                 align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignLeft,
+                 argument: str | int = None):
         super().__init__()
+
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
 
         self.RADIUS = radius
         self.BG_COLOR = QColor('#B6B6B6')
@@ -28,6 +33,7 @@ class Button(QPushButton):
         self.RATIO = ratio
         self.SCALE = scale
         self.MARGIN = margin
+        self.ALIGN = align
 
         self.ICON_SIZE = icon_size
 
@@ -42,11 +48,14 @@ class Button(QPushButton):
         self.setMinimumHeight(40)
         self.setMinimumWidth(min)
 
-        self.setMaximumWidth(max)
+        self.setMaximumWidth(maxs)
 
         self.name = name
         self.hovered = False
         self.FONT_SIZE = font_size
+        self.FONT_COLOR = font_color
+
+        self.ARG = argument
 
         self.setMouseTracking(True)
 
@@ -104,10 +113,11 @@ class Button(QPushButton):
         painter_font.setPixelSize(self.FONT_SIZE)
         painter_font.setWeight(QFont.Weight.Bold)
         paint.setFont(painter_font)
-        paint.setPen(Qt.GlobalColor.black)
+        paint.setPen(self.FONT_COLOR)
 
         paint.setClipRect(text_rect)
-        paint.drawText(text_rect, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self.name)
+
+        paint.drawText(text_rect, Qt.AlignmentFlag.AlignVCenter | self.ALIGN, self.name)
 
     def setImage(self, path: str):
         self.renderer = QSvgRenderer(path)
@@ -124,6 +134,16 @@ class Button(QPushButton):
     def setBackgroundPressed(self, color: QColor = QColor('#969696')):
         self.PRESSER_COLOR = color
         self.update()
+
+    def setText(self, text):
+        self.name = text
+        self.update()
+
+    def getText(self) -> str:
+        return self.name
+
+    def getArg(self) -> str | int:
+        return self.ARG
 
     def getIndicatorColor(self):
         return self.INDICATOR_COLOR

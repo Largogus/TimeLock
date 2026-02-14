@@ -1,6 +1,5 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QListWidget
-from Widgets import Button, Frame, Table
-from core.signals.signal import SignalObject
+from PySide6.QtWidgets import QWidget, QListWidget
+from core.signals.tracker_signals import SignalObject
 
 
 class MainMenu(QWidget):

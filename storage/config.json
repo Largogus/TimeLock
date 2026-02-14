@@ -10,10 +10,17 @@
     "systemsettings.exe",
     "textinputhost.exe",
     "windowsterminalhost.exe",
-    "windowsterminal.exe"
+    "windowsterminal.exe",
+    "searchhost.exe",
+    "werfault.exe",
+    "dwm.exe"
   ],
   "friendly_process": {
     "Notepad.exe": "Блокнот",
     "mspaint.exe": "Paint"
+  },
+  "ui": {
+    "font_family": "Segoe UI",
+    "font_size": 12
   }
 }

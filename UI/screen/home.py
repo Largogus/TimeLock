@@ -1,19 +1,20 @@
 from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem
 from PySide6.QtGui import QColor, QFont, QPalette
-from PySide6.QtCore import Qt
 from Widgets.Button import Button
 from Widgets.CategoryCard import CategoryCard
+from Widgets.Panels.SidePanel import SidePanel
 from Widgets.Wrapper import Wrapper
-from core.system.date import today
+from core.system.date import today, normal_time
 from Widgets.Frame import BaseFrame
 from Widgets.CircleProgressBar import CircleProgressBar
-from core.thread.time.window_time_counter import CountWindowsLife
-# from core.signals.signal import SignalObject
+from core.signals.tracker_signals import signal
 
 
 class Home(QWidget):
     def __init__(self):
         super().__init__()
+
+        self.sidepanel = SidePanel(self)
 
         mainLayout = QVBoxLayout()
         mainLayout.addSpacing(-20)
@@ -50,7 +51,6 @@ class Home(QWidget):
         self.progress_bar = CircleProgressBar()
 
         self.limit_label = BaseFrame(text="Лимит не установлен")
-        self.limit_label.setFontFrame('Segoe UI', 12)
         self.limit_label.setMinimumWidth(125)
 
         wrapper = Wrapper(self.progress_bar)
@@ -61,13 +61,17 @@ class Home(QWidget):
 
         self.date_frame.addSpacer(spacer)
 
-        self.CountTimePC = CountWindowsLife()
-        self.CountTimePC.tick.connect(lambda uptime: self.progress_bar.upd(uptime))
-        self.CountTimePC.start()
+        signal.sessionUpdate.connect(lambda time: self.progress_bar.upd(time))
+
+        # self.CountTimePC = CountWindowsLife()
+        # self.CountTimePC.tick.connect(lambda uptime: self.progress_bar.upd(uptime))
+        # self.CountTimePC.start()
 
         self.category_label = QLabel()
-        self.category_label.setText("Категории сегодня")
-        self.category_label.setFont(QFont("Segoe UI", 16))
+        self.category_label.setText("Категории сегодня:")
+        font = self.category_label.font()
+        font.setPointSize(16)
+        self.category_label.setFont(font)
         self.category_label.setPalette(QColor(255, 255, 255))
 
         wrapper_category_label = Wrapper(self.category_label)
@@ -75,23 +79,22 @@ class Home(QWidget):
         self.date_frame.addLayout(wrapper_category_label)
         self.date_frame.addSpacer(spacer)
 
-        self.template = {"chrome.exe": {"time": 25200, "name": "Google Chrome", "category": "Работа"},
-                         "telegram.exe": {"time": 21600, "name": "Telegram", "category": "Мессенджер"},
-                         "minecraft.exe": {"time": 14400, "name": "Minecraft", "category": "Игры"},
-                         "python.exe": {"time": 32400, "name": "Google Chrome", "category": "Работа"},
-                         "spotify.exe": {"time": 25200, "name": "Google Chrome", "category": "Музыка"}}
+        template = {"Работа": {"time": 57600, "name": ["Google Chrome", "Python"], "exe": ["chrome.exe", "python.exe"]},
+                         "Мессенджеры": {"time": 21600, "name": ["Telegram"], "exe": ["telegram.exe"]},
+                         "Игры": {"time": 14800, "name": ["Minecraft"], "exe": ["minecraft.exe"]},
+                         "Музыка": {"time": 25200, "name": ["Spotify"], "exe": ["spotify.exe"]},
+                         "Рисование": {"time": 0, "name": ["Paint"], "exe": "paint.exe"}}
+
+        top4 = dict(sorted(template.items(), key=lambda x: x[1]['time'], reverse=True)[:4]) # ЗАМЕНИТЬ НА SQL
 
         h = QHBoxLayout()
 
-        self.category_card = CategoryCard()
-        self.category_card1 = CategoryCard()
-        self.category_card2 = CategoryCard()
-        self.category_card3 = CategoryCard()
-
-        h.addWidget(self.category_card)
-        h.addWidget(self.category_card1)
-        h.addWidget(self.category_card2)
-        h.addWidget(self.category_card3)
+        for index, (category, data) in enumerate(top4.items()):
+            if data['time'] != 0 or index == 0:
+                category_card = CategoryCard(title=category, time=normal_time(data['time']))
+                category_card.setObjectName(category)
+                category_card.clicked.connect(lambda checked, c=category_card: self.OpenSidePanel(c))
+                h.addWidget(category_card)
 
         self.date_frame.addLayout(h)
 
@@ -102,3 +105,15 @@ class Home(QWidget):
         mainLayout.addSpacing(-20)
 
         self.setLayout(mainLayout)
+
+        self.sidepanel.raise_()
+
+    def resizeEvent(self, event):
+        self.sidepanel.upd()
+
+    def OpenSidePanel(self, card: CategoryCard):
+        obj = card.objectName()
+
+        if self.sidepanel._is_hide:
+            self.sidepanel.setDate(obj)
+        self.sidepanel.toggle()

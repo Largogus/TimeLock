@@ -1,7 +1,7 @@
-from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLayout
 from PySide6.QtGui import QPainter, QColor, QBrush, Qt, QFont
 from typing import Optional
+from core.system.config import FONT_FAMILY
 
 
 class BaseFrame(QFrame):
@@ -12,7 +12,7 @@ class BaseFrame(QFrame):
         self._border = border
         self._text = text
         self._font_size = 12
-        self._font_family = 'Segoe UI'
+        self._font_family = FONT_FAMILY
 
         self.mainLayout = box or QHBoxLayout()
 
@@ -31,7 +31,7 @@ class BaseFrame(QFrame):
         self._bg = color
         self.update()
 
-    def setFontFrame(self, family: str = 'Segoe UI', size: int = 12):
+    def setFontFrame(self, family: str = FONT_FAMILY, size: int = 12):
         self._font_family = family
         self._font_size = size
         self.update()

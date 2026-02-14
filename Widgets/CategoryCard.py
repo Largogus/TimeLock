@@ -1,18 +1,21 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QRectF
 from PySide6.QtGui import QColor, QPainter, QBrush, QFont
-from PySide6.QtWidgets import QFrame, QHBoxLayout
+from PySide6.QtWidgets import QHBoxLayout, QPushButton
+from core.system.config import FONT_FAMILY
 
 
-class CategoryCard(QFrame):
-    def __init__(self):
+class CategoryCard(QPushButton):
+    def __init__(self, title, time):
         super().__init__()
 
-        self._bg = QColor('#13261D')
-        self._bg_hover = QColor('#1E3D2B')
+        self._bg = QColor('#A7E6BE')
+        self._bg_hover = QColor('#24c72a')
         self._border = 16
-        self._font_size = 12
-        self._font_family = 'Segoe UI'
+        self._font_size = 20
         self._hover = False
+
+        self._title = title
+        self._time = time
 
         self.setFixedSize(240, 120)
 
@@ -30,24 +33,32 @@ class CategoryCard(QFrame):
 
         if self._hover:
             bg = self._bg_hover
+            bg.setAlpha(100)
         else:
             bg = self._bg
+            bg.setAlpha(200)
 
         painter.setBrush((QBrush(bg)))
         painter.setPen(Qt.PenStyle.NoPen)
         painter.drawRoundedRect(rect, self._border, self._border)
 
-        # if self._text is not None:
-        #     painter_font = painter.font()
-        #     painter_font.setPixelSize(self._font_size)
-        #     painter_font.setWeight(QFont.Weight.Bold)
-        #     painter_font.setFamily(self._font_family)
-        #     painter.setFont(painter_font)
-        #     painter.setPen(Qt.GlobalColor.black)
-        #
-        #     painter.drawText(rect, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft, self._text)
+        title_font = painter.font()
+        title_font.setPixelSize(self._font_size)
+        title_font.setWeight(QFont.Weight.Bold)
 
-        super().paintEvent(event)
+        painter.setFont(title_font)
+        painter.setPen(QColor('#1F2D2A'))
+
+        rect_title = QRectF(rect)
+        rect_title.setTop(rect.top() - 70)
+
+        rect_time = QRectF(rect)
+        rect_time.setTop(rect.top() + 25)
+
+        painter.drawText(rect_title, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter, self._title)
+
+        painter.setPen(QColor('#3A4A46'))
+        painter.drawText(rect_time, Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignCenter, self._time)
 
     def leaveEvent(self, event):
         self._hover = False

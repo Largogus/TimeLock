@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt, QRectF, QSize
-from PySide6.QtGui import QPainter, QPainterPath, QPen, QColor, QBrush, QFont
-from PySide6.QtWidgets import QVBoxLayout, QSlider, QWidget, QApplication
+from PySide6.QtGui import QPainter, QPen, QColor, QFont
+from PySide6.QtWidgets import QWidget
 from core.system.date import normal_time, to_time, plural
 
 
@@ -26,15 +26,15 @@ class CircleProgressBar(QWidget):
         self.update()
 
     def progressColor(self) -> QColor:
-        percent = self.progress * 100
+        percent = (self.progress / self.limit)
 
         if percent <= 25:
             return QColor("#4CAF50")
-        elif percent <= 50:
+        elif 25 > percent <= 50:
             return QColor("#1c731f")
-        elif percent <= 75:
+        elif 50 > percent <= 75:
             return QColor("#FFEB3B")
-        elif 75 < percent <= 100:
+        elif 75 > percent <= 100:
             return QColor("#F44336")
         else:
             return QColor("#F44336")
@@ -54,7 +54,7 @@ class CircleProgressBar(QWidget):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         margin = self.width() / 10
-        pen_width = self.width() / 25
+        pen_width = self.width() // 25
 
         rect = QRectF(
             margin / 2,
@@ -81,7 +81,6 @@ class CircleProgressBar(QWidget):
         font.setPointSize(int(self.height() / 16))
 
         painter.setFont(font)
-        painter.setPen(Qt.GlobalColor.white)
 
         text = self.time
 
@@ -94,6 +93,8 @@ class CircleProgressBar(QWidget):
             text_rect_l = QRectF(rect)
             text_rect_l.setTop(rect.top() - 15)
 
+            painter.setPen(QColor('#2b2b2b'))
+
             painter.drawText(text_rect_l, Qt.AlignmentFlag.AlignCenter, text)
 
             font.setPointSize(int(self.height() / 24))
@@ -101,6 +102,8 @@ class CircleProgressBar(QWidget):
 
             h = to_time(self.limit)
             t_h = plural(h, ("час", "часа", "часов"))
+
+            painter.setPen(QColor('#555555'))
 
             painter.drawText(text_rect_s, Qt.AlignmentFlag.AlignCenter, f"из {h} {t_h}")
 

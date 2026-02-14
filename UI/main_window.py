@@ -1,8 +1,8 @@
 from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QSpacerItem
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Qt
+from UI.screen.applications import Applications
 from core.system.desktop import DesktopSize
-from core.signals.signal import SignalObject
 from Widgets.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
@@ -18,8 +18,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('TimeLock')
         self.setWindowIcon(QIcon('src/icon.png'))
 
-        self.signal = SignalObject()
-        self.signal.change_window.connect(self.change_window)
+        # self.signal = SignalObject()
+        # self.signal.change_window.connect(self.change_window)
 
         x, y = DesktopSize(self)
 
@@ -37,6 +37,10 @@ class MainWindow(QMainWindow):
         self.sidebar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self.sidebar.setFixedWidth(200)
         self.sidebar.setMinimumWidth(55)
+
+        self.stacked = QStackedWidget()
+        self.stacked.setMinimumSize(300, 100)
+        self.stacked.setContentsMargins(0, 0, 0, 0)
 
         sidebar_buttons = []
 
@@ -101,15 +105,14 @@ class MainWindow(QMainWindow):
         for btn in sidebar_buttons:
             btn.setBackgroundHover(QColor('#24c72a'))
             btn.setBackgroundPressed(QColor('#24c72a'))
+            text = btn.getText()
+            btn.clicked.connect(lambda _, t=text: self.change_window(t))
             self.main.addElement(btn)
 
         self.sidebar.addElement(self.main)
 
-        self.stacked = QStackedWidget()
-        self.stacked.setMinimumSize(300, 100)
-        self.stacked.setContentsMargins(0, 0, 0, 0)
-
         self.stacked.addWidget(Home())
+        self.stacked.addWidget(Applications())
         self.sidebar.mainLayout.addStretch(1)
         layout.addWidget(self.sidebar)
         layout.addWidget(self.stacked)
@@ -146,15 +149,11 @@ class MainWindow(QMainWindow):
             else:
                 self.logo.hide()
 
-    def change_window(self, data):
-        if data == "main_window":
+    def change_window(self, data: str):
+        if data == "Обзор":
             self.stacked.setCurrentIndex(0)
-        elif data == "add_apl":
+        elif data == "Приложения":
             self.stacked.setCurrentIndex(1)
-        elif data == "statistic":
-            self.stacked.setCurrentIndex(2)
-        elif data == "settings":
-            self.stacked.setCurrentIndex(3)
 
     def resizeEvent(self, event):
         width = self.width()

@@ -1,13 +1,13 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QRadioButton, QSpacerItem, QSizePolicy
-from core.signals.signal import SignalObject
+from core.signals.tracker_signals import SignalObject
 from PySide6.QtCore import QTimer, Qt
 from Widgets.Frame import BaseFrame
 from Widgets.PopUp import PopUp
 from Widgets.Button import Button
 from Widgets.TextEdit import TextEdit
 from PySide6.QtGui import QColor, QFont
-from core.system.process import get_application
-from style.radio_button_style import RadioStyle
+from core.system.windows_active_app import get_application
+from Style.radio_button_style import RadioStyle
 from core.db.session import SessionLocal
 from core.models.models import Blacklist, App
 
