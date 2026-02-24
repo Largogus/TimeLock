@@ -52,4 +52,4 @@ if __name__ == '__main__':
         main()
     except Exception:
         logger.exception("Критическая ошибка при запуске приложения")
-        raise # Только тесты
+        raise # Только тесты!!
