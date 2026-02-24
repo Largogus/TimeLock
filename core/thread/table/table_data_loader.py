@@ -13,26 +13,31 @@ class TableDataLoader(QThread):
         self.db_session_factory = db_session_factory
 
     def run(self):
-        while not self.isInterruptionRequested():
-            db_session = self.db_session_factory()
+        db_session = self.db_session_factory()
+
+        try:
             interval = get_settings(
-                    db_session,
-                    "tracking_interval_seconds",
-                    cast_type=int)
+                db_session,
+                "tracking_interval_seconds",
+                cast_type=int
+            ) or 1
 
-            try:
-                data = get_time_application(db_session)
+            while not self.isInterruptionRequested():
+                try:
+                    data = get_time_application(db_session)
+                    self.statsReady.emit(data)
 
-                self.statsReady.emit(data)
-            except Exception as e:
-                logger.critical(f"Поток умер, причина: {e}")
-            finally:
-                db_session.close()
+                except Exception as e:
+                    logger.critical(f"Поток умер, причина: {e}")
+                    db_session.rollback()
 
-            for _ in range(interval):
-                if self.isInterruptionRequested():
-                    break
-                QThread.sleep(1)
+                for _ in range(interval):
+                    if self.isInterruptionRequested():
+                        break
+                    QThread.sleep(1)
+
+        finally:
+            db_session.close()
 
     def stop(self):
         self.requestInterruption()

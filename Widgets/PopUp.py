@@ -56,6 +56,7 @@ class PopUp(QComboBox):
                  bg_focus: QColor | Qt.GlobalColor = QColor(201, 201, 201, 150),
                  bg_text_color: QColor | Qt.GlobalColor = Qt.GlobalColor.black,
                  bg_text_color_box: QColor | Qt.GlobalColor = Qt.GlobalColor.black,
+                 close_btn: bool = True,
                  font_size: int = 20,
                  fixed_width: int = 250):
         super().__init__()
@@ -70,6 +71,7 @@ class PopUp(QComboBox):
         self._bg_text_color = bg_text_color
         self._bg_text_color_box = bg_text_color_box
         self._font_size = font_size
+        self._close_btn = close_btn
 
         self.setView(QListView())
         self.setItemDelegate(FancyDelegate(self._bg_color, self._bg_hover_box, self._bg_focus, self._bg_text_color_box, self._font_size))
@@ -124,8 +126,10 @@ class PopUp(QComboBox):
             self._clear_rect = QRect(x, y, size, size)
 
             painter.setPen(QPen(self._bg_text_color, 2))
-            painter.drawLine(self._clear_rect.topLeft(), self._clear_rect.bottomRight())
-            painter.drawLine(self._clear_rect.bottomLeft(), self._clear_rect.topRight())
+
+            if self._close_btn:
+                painter.drawLine(self._clear_rect.topLeft(), self._clear_rect.bottomRight())
+                painter.drawLine(self._clear_rect.bottomLeft(), self._clear_rect.topRight())
 
             painter.drawText(rect.adjusted(8, 0, -25, 0),
                              Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft,
@@ -150,7 +154,7 @@ class PopUp(QComboBox):
         self.renderer.render(painter, rect_svg)
 
     def mousePressEvent(self, event):
-        if self._clear_rect and self._clear_rect.contains(event.pos()):
+        if self._clear_rect and self._clear_rect.contains(event.pos()) and self._close_btn:
             self.resetSelection()
             self.close.emit()
             return

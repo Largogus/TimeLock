@@ -13,11 +13,15 @@
     "windowsterminal.exe",
     "searchhost.exe",
     "werfault.exe",
-    "dwm.exe"
+    "dwm.exe",
+    "startmenuexperiencehost.exe"
   ],
   "friendly_process": {
     "Notepad.exe": "Блокнот",
-    "mspaint.exe": "Paint"
+    "mspaint.exe": "Paint",
+    "max.exe": "MAX",
+    "whatsapp.root.exe": "WhatsApp",
+    "sqlitestudio.exe": "SQLiteStudio"
   },
   "ui": {
     "font_family": "Segoe UI",

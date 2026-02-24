@@ -1,11 +1,10 @@
 from PySide6.QtGui import QGuiApplication
+from PySide6.QtWidgets import QApplication
 
 
-def DesktopSize(screen):
-    SCREEN = screen.geometry()
-    DESKTOP = QGuiApplication.primaryScreen().geometry()
-
-    x = (DESKTOP.width() - SCREEN.width()) // 2
-    y = (DESKTOP.height() - SCREEN.height()) // 2
+def DesktopSize(widget) -> tuple:
+    screen = QApplication.primaryScreen().availableGeometry()
+    x = (screen.width() - widget.width()) // 2
+    y = (screen.height() - widget.height()) // 2
 
     return (x, y)

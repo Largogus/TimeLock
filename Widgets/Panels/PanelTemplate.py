@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QSizePolicy
 from PySide6.QtGui import QColor, QPainter
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
-from Widgets.Button import Button
+from Widgets.Buttons.Button import Button
 
 
 class PanelTemplate(QWidget):

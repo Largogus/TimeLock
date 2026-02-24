@@ -1,22 +1,29 @@
 from PySide6.QtGui import QFont, Qt, QColor, QPalette
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QTableView, QHeaderView, QMenu
-from Widgets.Button import Button
+from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
+from Widgets.Modal.CategoryModal import CategoryModal
 from Widgets.PopUp import PopUp
 from Style.TableStyle import TableDelegate
 from Style.MenuStyle import MenuStyle
 from Widgets.TextEdit import TextEdit
 from Widgets.Wrapper import Wrapper
+from core.command.category_command import get_category
+from core.command.settings import get_settings
 from core.db.session import SessionLocal
+from core.statistic.middle_time import get_middle_time
 from core.thread.table.table_data_loader import TableDataLoader
 from core.widgets.sort_table import SortFilter
 from core.widgets.abstract_model_table import TableModel
 from Widgets.Panels.AppPanel import AppPanel
+from core.signals.table_signals import signal
+from core.signals.change_signals import signal_change
 
 
 class Applications(QWidget):
     def __init__(self):
         super().__init__()
+        self.db_session = SessionLocal()
 
         self.appPanel = AppPanel(self)
 
@@ -27,10 +34,10 @@ class Applications(QWidget):
         self.main.mainLayout.setContentsMargins(20, 20, 20, 0)
         self.main.setBorderRadius(0)
 
-        title_font = QFont('Segoe UI', 18)
-        title_font.setBold(True)
-
         title = QLabel()
+        title_font = title.font()
+        title_font.setPointSize(18)
+        title_font.setBold(True)
         title.setFont(title_font)
         title.setPalette(QPalette(QColor(255, 255, 255)))
         title.setText('Приложения')
@@ -38,7 +45,9 @@ class Applications(QWidget):
         info_window = QLabel()
         info_window.setText("Управление по программам")
         info_window.setPalette(QPalette(QColor(163, 163, 163)))
-        info_window.setFont(QFont('Segoe UI', 14))
+        info_window_font = info_window.font()
+        info_window_font.setPointSize(14)
+        info_window.setFont(info_window_font)
 
         '''----------------------------------'''
 
@@ -50,13 +59,13 @@ class Applications(QWidget):
         header.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         button_header = []
 
-        category = PopUp("Категории:")
+        self.category = PopUp("Категории:")
 
-        category.addItems(["Без категории", 'Работа', "Игры", "Мессенджеры"])
-        category.currentTextChanged.connect(lambda: self.proxy_table.updateCategory(category.currentText()))
-        category.close.connect(lambda: self.proxy_table.updateCategory(""))
+        self.category.addItems(get_category(self.db_session))
+        self.category.currentTextChanged.connect(lambda: self.proxy_table.updateCategory(self.category.currentText()))
+        self.category.close.connect(lambda: self.proxy_table.updateCategory(""))
 
-        button_header.append(category)
+        button_header.append(self.category)
 
         search = TextEdit(image="src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
         search.setMinimumWidth(250)
@@ -92,6 +101,9 @@ class Applications(QWidget):
         self.table = QTableView()
 
         self.model = TableModel()
+        self.model.dataChanged.connect(self.updAppPanelTime)
+
+        signal.objectCategoryChanged.connect(self.model.updateCategoryInTable)
 
         self.table.clicked.connect(self.openAppPanel)
 
@@ -156,6 +168,11 @@ class Applications(QWidget):
 
         self.setLayout(layout)
 
+        signal_change.application_arg.connect(self.category_from_card)
+
+    def category_from_card(self, data):
+        self.category.setCurrentText(data)
+
     def filter_allow(self):
         arg = self.filter_search.currentText()
         if arg == "По времени":
@@ -170,10 +187,17 @@ class Applications(QWidget):
     def small_menu(self, index):
         menu = QMenu(self)
 
-        menu.addAction("Изменить категорию")
-        menu.addAction("Установить / изменить лимит")
+        change_category_action = menu.addAction("Изменить категорию")
+        change_limit_menu = menu.addAction("Установить / изменить лимит")
         menu.addAction("Заблокировать приложение")
         menu.addAction("Не отслеживать приложение")
+
+        cat_modal = CategoryModal(index.data(Qt.ItemDataRole.UserRole))
+
+        data = index.data(Qt.ItemDataRole.UserRole)
+
+        change_category_action.triggered.connect(lambda: cat_modal.show())
+        change_limit_menu.triggered.connect(lambda: signal_change.limit_screen.emit(2, data, "app"))
 
         rect = self.table.visualRect(index)
         pos = self.table.viewport().mapToGlobal(rect.bottomLeft())
@@ -190,13 +214,37 @@ class Applications(QWidget):
 
         for inx, col in enumerate(range(model.columnCount())):
             info = model.index(row, col).data()
+            app_id = model.index(row, col).data(Qt.ItemDataRole.UserRole)
 
             if inx == 0: data['name'] = info
             if inx == 1: data['category'] = info
             if inx == 2: data['today'] = info
             if inx == 3: data['limit'] = info
 
+            if col != 5:
+                data['middle_time'] = get_middle_time(self.table_loader.db_session_factory, app_id)
+
         self.appPanel.reopen(data, self.appPanel.setDate)
+
+    def updAppPanelTime(self, index):
+        model = index.model()
+        row = index.row()
+
+        data = {}
+
+        for inx, col in enumerate(range(model.columnCount())):
+            info = model.index(row, col).data()
+            app_id = model.index(row, col).data(Qt.ItemDataRole.UserRole)
+
+            if inx == 0: data['name'] = info
+            if inx == 1: data['category'] = info
+            if inx == 2: data['today'] = info
+            if inx == 3: data['limit'] = info
+
+            if col != 5:
+                data['middle_time'] = get_middle_time(self.table_loader.db_session_factory, app_id)
+
+        self.appPanel.setDate(data)
 
     def resizeEvent(self, event):
         self.appPanel.upd()

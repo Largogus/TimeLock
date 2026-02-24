@@ -4,6 +4,7 @@ from loguru import logger
 
 
 CONFIG_PATH = Path("storage/config.json")
+ICON_PATH = Path("src/icon.png")
 
 
 def load_config() -> dict:
@@ -18,6 +19,7 @@ def load_config() -> dict:
         raise
 
     validate_config(config)
+    validate_path(ICON_PATH)
     return config
 
 
@@ -42,6 +44,13 @@ def validate_config(config):
     return True
 
 
+def validate_path(path: Path):
+    if not path.exists():
+        raise FileNotFoundError(f"Файл {path} не найден")
+
+    return True
+
+
 _config = load_config()
 
 DATABASE_PATH = _config['database_url']
@@ -52,10 +61,13 @@ FRIENDLY_PROCESS = _config['friendly_process']
 
 FONT_FAMILY = _config["ui"]["font_family"]
 
+ICON_PATH = str(ICON_PATH)
+
 
 __all__ = (
     "DATABASE_PATH",
     "SYSTEM_PROCESS",
     'FRIENDLY_PROCESS',
-    "FONT_FAMILY"
+    "FONT_FAMILY",
+    "ICON_PATH"
 )

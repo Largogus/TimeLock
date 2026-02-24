@@ -2,11 +2,14 @@ from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QSpacerItem
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Qt
 from UI.screen.applications import Applications
+from UI.screen.limit import Limit
 from core.system.desktop import DesktopSize
-from Widgets.Button import Button
+from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
 from UI.screen.home import Home
+from core.system.config import ICON_PATH
+from core.signals.change_signals import signal_change
 
 
 class MainWindow(QMainWindow):
@@ -16,7 +19,7 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1300, 600)
         self.setMinimumSize(1300, 600)
         self.setWindowTitle('TimeLock')
-        self.setWindowIcon(QIcon('src/icon.png'))
+        self.setWindowIcon(QIcon(ICON_PATH))
 
         # self.signal = SignalObject()
         # self.signal.change_window.connect(self.change_window)
@@ -74,12 +77,10 @@ class MainWindow(QMainWindow):
         button_home = Button("Обзор", min=64, svg_path="src/icon/home.svg", ratio=28, scale=2, font_size=20,
                              radius=20, alpha=[0, 50, 100])
         button_home.setBackgroundHover()
-        button_home.clicked.connect(lambda: print(42))
         sidebar_buttons.append(button_home)
 
         button_application = Button("Приложения", min=64, svg_path="src/icon/computer.svg", ratio=28, scale=2,
                                     font_size=20, alpha=[0, 50, 100], radius=20)
-        button_application.clicked.connect(lambda: print(42))
         sidebar_buttons.append(button_application)
 
         button_limit = Button("Лимиты", min=64, svg_path="src/icon/hourglass.svg", ratio=28, scale=2, font_size=20,
@@ -113,6 +114,7 @@ class MainWindow(QMainWindow):
 
         self.stacked.addWidget(Home())
         self.stacked.addWidget(Applications())
+        self.stacked.addWidget(Limit())
         self.sidebar.mainLayout.addStretch(1)
         layout.addWidget(self.sidebar)
         layout.addWidget(self.stacked)
@@ -121,6 +123,9 @@ class MainWindow(QMainWindow):
         self.window_small = False
 
         self.setCentralWidget(central_widget)
+
+        signal_change.application_screen.connect(self.change_current_window)
+        signal_change.limit_screen.connect(self.change_current_window)
 
     def toggle_sideboard(self):
         if not self.window_small:
@@ -154,10 +159,11 @@ class MainWindow(QMainWindow):
             self.stacked.setCurrentIndex(0)
         elif data == "Приложения":
             self.stacked.setCurrentIndex(1)
+        elif data == "Лимиты":
+            self.stacked.setCurrentIndex(2)
 
     def resizeEvent(self, event):
         width = self.width()
-        print(width, self.height())
 
         if width < 856:
             if not self.is_small:
@@ -170,3 +176,15 @@ class MainWindow(QMainWindow):
 
             if self.window_small:
                 self.logo.show()
+
+    def change_current_window(self, inx, data, types=None):
+        self.stacked.setCurrentIndex(inx)
+
+        if inx == 1:
+            signal_change.application_arg.emit(data)
+
+        if inx == 2:
+            if types == 'category':
+                signal_change.limit_category.emit(data)
+            elif types == 'app':
+                signal_change.limit_app.emit(data)

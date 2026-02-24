@@ -1,4 +1,5 @@
-from core.models.models import App, AppSession
+from core.models.App import App
+from core.models.AppSession import AppSession
 from core.db.session import SessionLocal
 from datetime import datetime
 

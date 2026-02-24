@@ -67,6 +67,12 @@ class TableModel(QAbstractTableModel):
             if col == 5:
                 return "..."
 
+        if role == Qt.ItemDataRole.UserRole:
+            if col == 5:
+                return app['name']
+            else:
+                return app["id"]
+
         if role == Qt.ItemDataRole.TextAlignmentRole and col != 0:
             return Qt.AlignmentFlag.AlignCenter
 
@@ -74,12 +80,15 @@ class TableModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return ["Название", "Категория", "Сегодня", "Лимит", "Статус", ''][section]
 
-    # def setData(self, index, value, role=Qt.ItemDataRole.EditRole):
-    #     if role != Qt.ItemDataRole.EditRole:
-    #         return False
-    #
-    #     app = self.apps[index.row()]
-    #     col = index.column()
-    #
-    #     if col == 0:
-    #         app.name = value
+    def updateCategoryInTable(self, app_name: str, new_category: str):
+
+        row_to_update = next(
+            (i for i, app in enumerate(self.apps_data) if app["name"] == app_name),
+            None
+        )
+        if row_to_update is not None:
+            self.apps_data[row_to_update]["category"] = new_category
+
+            index = self.index(row_to_update, 1)
+
+            self.dataChanged.emit(index, index, [Qt.ItemDataRole.DisplayRole])

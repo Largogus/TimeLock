@@ -1,5 +1,5 @@
 import win32api
-from win32gui import GetWindowText, IsWindowVisible, EnumWindows, GetForegroundWindow
+from win32gui import GetWindowText, IsWindowVisible, GetClassName, GetForegroundWindow
 from win32process import GetWindowThreadProcessId
 from psutil import Process, NoSuchProcess, process_iter, AccessDenied
 from core.system.config import SYSTEM_PROCESS, FRIENDLY_PROCESS
@@ -10,6 +10,14 @@ from loguru import logger
 def get_active_window_app() -> tuple[str, str] | tuple[None, None]:
     try:
         hwnd = GetForegroundWindow()
+
+        if not hwnd or not IsWindowVisible(hwnd):
+            return None, None
+
+        class_name = GetClassName(hwnd)
+        if class_name in ("Progman", "WorkerW"):
+            return None, None
+
         _, pid = GetWindowThreadProcessId(hwnd)
         proc = Process(pid)
 

@@ -2,16 +2,13 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtCore import Qt
 from Widgets.Panels.PanelTemplate import PanelTemplate
+from core.db.session import SessionLocal
 from core.system.date import normal_time, plural
-from Widgets.Button import Button
+from Widgets.Buttons.Button import Button
 from Widgets.Wrapper import Wrapper
 from core.system.config import FONT_FAMILY
-
-template = {"Работа": {"time": 58500, "name": {"Google Chrome": 25010, "Python": 25000, "Microsoft Word": 1490, "PyCharm": 7000}, "exe": ["chrome.exe", "python.exe", "mw.exe", "pycahrm.exe"], "limit": 0}, # ТЕСТ
-            "Мессенджеры": {"time": 3500, "name": {"Telegram": 3000, "MAX": 500}, "exe": ["telegram.exe", "max.exe"], "limit": 15425},
-            "Игры": {"time": 14800, "name": ["Minecraft"], "exe": ["minecraft.exe"], "limit": 14800},
-            "Музыка": {"time": 25200, "name": ["Google Chrome"], "exe": ["spotify.exe"], "limit": 19540},
-            "Рисование": {"time": 0, "name": ["Paint"], "exe": "paint.exe"}, "limit": 0}
+from core.signals.change_signals import signal_change
+from core.widgets.side_panel_data import addData
 
 
 class SidePanel(PanelTemplate):
@@ -40,11 +37,6 @@ class SidePanel(PanelTemplate):
 
         self.wrapper_limit = Wrapper(self.limit)
 
-        # self.search = TextEdit(placeholder="Найти приложение…", border_radius=10, background=QColor('#0F1F17'))
-        # self.search.setMaximumSize(350, 50)
-        #
-        # wrapper_search = Wrapper(self.search)
-
         self.top_app = QHBoxLayout()
         self.dop = QVBoxLayout()
 
@@ -59,25 +51,27 @@ class SidePanel(PanelTemplate):
         self.reload()
 
         self.name.setText(obj)
-        date = template[obj]
-        text = f"Сегодня: {normal_time(date['time'], format='short')} / Лимит: —" if date['limit'] == 0 else \
-            f"Сегодня: {normal_time(date['time'], format='short')} / Лимит: {normal_time(date['limit'], format='short')}"
-        self.time_today.setText(text)
-        top_app = dict(sorted(date["name"].items(), key=lambda x: x[1], reverse=True)) # ЗАМЕНИТЬ НА SQL
 
-        if date['limit']:
+        text, limits, top_app = addData(obj)
+
+        self.time_today.setText(text)
+
+        if limits is not None:
             self.limit.setText("Изменить лимит на категорию")
         else:
             self.limit.setText("Установить лимит на категорию")
 
         if len(top_app) > 3:
             lens = len(top_app) - 3
-            top_3app = dict(sorted(date["name"].items(), key=lambda x: x[1], reverse=True)[:3])
+            top_3app = dict(sorted(top_app.items(), key=lambda x: x[1], reverse=True)[:3])
             self.application = top_3app
             self.more = Button(f"+ ещё {lens} {plural(lens, ('приложение', 'приложения', 'приложений'))}", alpha=[0, 0, 0], font_color=Qt.GlobalColor.white, align=Qt.AlignmentFlag.AlignCenter)
             self.dop.addWidget(self.more)
         else:
             self.application = top_app
+
+        self.to_app.clicked.connect(lambda: signal_change.application_screen.emit(1, obj))
+        self.limit.clicked.connect(lambda: signal_change.limit_screen.emit(2, obj, "category"))
 
         self.run()
 
@@ -102,7 +96,7 @@ class SidePanel(PanelTemplate):
         self.layout.addLayout(self.wrapper_to_app)
         self.layout.addStretch(1)
 
-    def run(self):  # Под SQL переделать!!!
+    def run(self):
         box1 = QVBoxLayout()
         box2 = QVBoxLayout()
         box3 = QVBoxLayout()

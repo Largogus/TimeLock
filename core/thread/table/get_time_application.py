@@ -1,42 +1,56 @@
 from datetime import datetime, date, time
-from core.models.models import App, AppSession, AppLimit
+
+from sqlalchemy import func
+
+from core.models.App import App
+from core.models.AppSession import AppSession
+from core.models.AppLimit import AppLimit
 from core.system.date import normal_time
 
 
 def get_time_application(session):
     today_start = datetime.combine(date.today(), time.min)
-    today_end = datetime.combine(date.today(), time.max)
+    now = datetime.now()
 
-    apps = session.query(App, AppLimit).outerjoin(AppLimit, App.id == AppLimit.app_id).all()
+    total_time_subquery = (
+        session.query(
+            AppSession.app_id.label("app_id"),
+            func.sum(
+                func.strftime('%s', func.coalesce(AppSession.end_time, now)) -
+                func.strftime('%s', AppSession.start_time)
+            ).label("total_seconds")
+        )
+        .filter(
+            AppSession.start_time <= now,
+            func.coalesce(AppSession.end_time, now) >= today_start
+        )
+        .group_by(AppSession.app_id)
+        .subquery()
+    )
+
+    query = (
+        session.query(
+            App,
+            AppLimit,
+            func.coalesce(total_time_subquery.c.total_seconds, 0)
+        )
+        .outerjoin(AppLimit, App.id == AppLimit.app_id)
+        .outerjoin(total_time_subquery, App.id == total_time_subquery.c.app_id)
+    )
+
     apps_data = []
 
-    for app, app_limit in apps:
-        limit = app_limit.daily_limit_minutes if app_limit else 0
-
-        sessions = session.query(AppSession).filter(
-            AppSession.app_id == app.id,
-            AppSession.start_time >= today_start
-        ).all()
-
-        total_seconds = 0
-        for s in sessions:
-            start = s.start_time
-            end = s.end_time or datetime.now()
-            if end > today_end:
-                end = today_end
-            if start < today_start:
-                start = today_start
-            diff = (end - start).total_seconds()
-            if diff > 0:
-                total_seconds += diff
+    for app, app_limit, total_seconds in query.all():
+        total_seconds = int(total_seconds or 0)
+        limit = app_limit.daily_limit if app_limit else 0
 
         apps_data.append({
             "id": app.id,
             "name": app.name,
             "category": app.category,
-            "today_time": normal_time(int(total_seconds), "short"),
+            "today_time": normal_time(total_seconds, "short"),
             "limit": limit,
-            "status": int(total_seconds) < limit if limit else True
+            "status": total_seconds < limit if limit else True
         })
 
     return apps_data

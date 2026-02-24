@@ -1,4 +1,5 @@
 from datetime import datetime
+from PySide6.QtCore import QTime
 from loguru import logger
 
 
@@ -40,11 +41,14 @@ def today() -> str:
 def normal_time(time: int, format: str = "standard") -> str:
     """:param format: standard - '7 часов' , full - '7 часов 0 минут', short - '7ч'"""
 
-    minutes = (time % 3600) // 60
-    hours = time // 3600
+    minutes = int((time % 3600) // 60)
+    hours = int(time // 3600)
 
     f_h = plural(hours, ("час", "часа", "часов")) if format in ("standard", "full") else "ч"
     f_m = plural(minutes, ("минута", "минуты", "минут")) if format in ("standard", "full") else "м"
+
+    if minutes == 0 and hours == 0 and format != 'full':
+        return f"{minutes} {f_m}"
 
     if minutes == 0 and format != 'full':
         return f"{hours} {f_h}"
@@ -80,3 +84,10 @@ def parse_time(text: str) -> int:
         minutes_part = text.split("м")[0]
         minutes = int(minutes_part)
     return hours * 60 + minutes
+
+
+def time_for_qt(time: int) -> QTime:
+    hours = int(time // 3600)
+    minutes = int((time % 3600) // 60)
+
+    return QTime(hours, minutes)

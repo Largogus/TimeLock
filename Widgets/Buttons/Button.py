@@ -2,6 +2,7 @@ from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QPushButton, QSizePolicy
 from PySide6.QtCore import Qt, QRectF, QPropertyAnimation, Property
 from PySide6.QtGui import QPainter, QBrush, QColor, QFont
+from Widgets.Modal.DisabledMessageModal import show_disabled_message
 
 
 class Button(QPushButton):
@@ -19,10 +20,12 @@ class Button(QPushButton):
                  margin: int = 6,
                  indicator: bool = False,
                  align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignLeft,
-                 argument: str | int = None):
+                 argument: str | int = None,
+                 disabled_text: str = ""):
         super().__init__()
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed,
+                           QSizePolicy.Policy.Fixed)
 
         self.RADIUS = radius
         self.BG_COLOR = QColor('#B6B6B6')
@@ -34,6 +37,8 @@ class Button(QPushButton):
         self.SCALE = scale
         self.MARGIN = margin
         self.ALIGN = align
+        self.DISABLED_TEXT = disabled_text
+        self.DISABLED = False
 
         self.ICON_SIZE = icon_size
 
@@ -83,10 +88,25 @@ class Button(QPushButton):
             color = self.BG_COLOR
             color.setAlpha(self.alpha_color)
 
+        if self.DISABLED:
+            color = self.BG_COLOR
+            color.setAlpha(self.alpha_color)
+
         paint.setBrush((QBrush(color)))
         paint.setPen(Qt.PenStyle.NoPen)
 
         paint.drawRoundedRect(draw_rect, self.RADIUS, self.RADIUS)
+
+        if not self.DISABLED:
+            pass
+        else:
+            black_color = QColor('black')
+            black_color.setAlpha(100)
+
+            paint.setBrush((QBrush(black_color)))
+            paint.setPen(Qt.PenStyle.NoPen)
+
+            paint.drawRoundedRect(draw_rect, self.RADIUS, self.RADIUS)
 
         if self.renderer:
             icon_rect = QRectF(
@@ -139,6 +159,9 @@ class Button(QPushButton):
         self.name = text
         self.update()
 
+    def setDisabled(self, arg__1):
+        self.DISABLED = arg__1
+
     def getText(self) -> str:
         return self.name
 
@@ -163,6 +186,11 @@ class Button(QPushButton):
         super().leaveEvent(event)
 
     def mousePressEvent(self, event):
+        if self.DISABLED:
+            show_disabled_message(text=self.DISABLED_TEXT)
+
+            return
+
         if self.INDICATOR:
             self.indicator_anim.stop()
             self.indicator_anim.setStartValue(self.INDICATOR_COLOR)
