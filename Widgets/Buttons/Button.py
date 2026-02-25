@@ -143,6 +143,9 @@ class Button(QPushButton):
         self.renderer = QSvgRenderer(path)
         self.update()
 
+    def setDisabledText(self, text):
+        self.DISABLED_TEXT = text
+
     def setBackgroundColor(self, color: QColor = QColor('#B6B6B6')):
         self.BG_COLOR = color
         self.update()
@@ -161,6 +164,7 @@ class Button(QPushButton):
 
     def setDisabled(self, arg__1):
         self.DISABLED = arg__1
+        self.update()
 
     def getText(self) -> str:
         return self.name

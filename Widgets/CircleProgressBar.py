@@ -5,10 +5,10 @@ from core.system.date import normal_time, to_time, plural
 
 
 class CircleProgressBar(QWidget):
-    def __init__(self):
+    def __init__(self, limit):
         super().__init__()
         self.progress = 0
-        self.limit = 43200 # потом на 0
+        self.limit = limit
         self.setMinimumSize(50, 50)
         self.setMaximumSize(250, 250)
 
@@ -26,6 +26,9 @@ class CircleProgressBar(QWidget):
         self.update()
 
     def progressColor(self) -> QColor:
+        if self.limit == 0:
+            return QColor("#909fb6")
+
         percent = (self.progress / self.limit)
 
         if percent <= 25:
@@ -85,6 +88,7 @@ class CircleProgressBar(QWidget):
         text = self.time
 
         if self.limit == 0:
+            painter.setPen(QColor('#2b2b2b'))
             painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, text)
         else:
             text_rect_s = QRectF(rect)

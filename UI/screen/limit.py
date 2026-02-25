@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, QTimer, QTime
+from PySide6.QtCore import Qt, QTimer, QTime, Signal
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QTimeEdit, QHBoxLayout, \
     QCompleter, QFrame, QAbstractItemView, QMessageBox
@@ -10,12 +10,14 @@ from Widgets.Line import Line
 from Widgets.PopUp import PopUp
 from Widgets.TextEdit import TextEdit
 from core.command.category_command import get_category, count_time_category, count_limit_category
-from core.command.edit_limit import edit_limit_app, edit_limit_category, delete_limit_app, delete_limit_category
+from core.command.edit_limit import edit_limit_app, edit_limit_category, delete_limit_app, delete_limit_category, \
+    get_category_limit, turn_category_limit, turn_app_limit, get_app_limit
 from core.command.get_all_app import get_all_app, count_time_app_name, count_limit_app_name
 from core.command.is_exists_in_bd import is_exists_in_bd
 from core.command.settings import get_settings, set_settings
 from core.db.session import SessionLocal
 from core.signals.change_signals import signal_change
+from core.signals.edit_signals import signal_edit
 from core.system.date import normal_time, time_for_qt
 from core.system.get_total_pc_time_today import get_total_pc_time_today
 
@@ -104,10 +106,16 @@ class Limit(QWidget):
         btn_group = QHBoxLayout()
 
         save_btn = Button(name="Сохранить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250)
-        save_btn.setBackgroundColor(QColor("#a8f0c6"))
+        save_btn.setBackgroundColor(QColor("#7adca3"))
         save_btn.setBackgroundHover(QColor("#52e08d"))
         save_btn.setBackgroundPressed(QColor("#1fad5a"))
         save_btn.clicked.connect(self.setLimitCommon)
+
+        self.turn_btn = Button(name=self.get_turn(), align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250)
+        self.turn_btn.setBackgroundColor(QColor("#a9d6bc"))
+        self.turn_btn.setBackgroundHover(QColor("#aedbc1"))
+        self.turn_btn.setBackgroundPressed(QColor("#b7e1c8"))
+        self.turn_btn.clicked.connect(self.turnLimitCommon)
 
         del_btn = Button(name="Удалить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250)
         del_btn.setBackgroundColor(QColor("#bdcbc3"))
@@ -116,6 +124,7 @@ class Limit(QWidget):
         del_btn.clicked.connect(self.removeLimitCommon)
 
         btn_group.addWidget(save_btn)
+        btn_group.addWidget(self.turn_btn)
         btn_group.addWidget(del_btn)
 
         common_limit_block_vbox.addWidget(common_limit_text)
@@ -173,23 +182,34 @@ class Limit(QWidget):
 
         btn_group_category = QHBoxLayout()
 
-        self.category_limit_edit = Button(name="Сохранить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250, disabled_text="Выберите категорию для действия")
+        self.category_limit_edit = Button(name="Сохранить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10,
+                                          maxs=250, disabled_text="Выберите категорию для действия")
         self.category_limit_edit.setBackgroundColor(QColor("#a8f0c6"))
         self.category_limit_edit.setBackgroundHover(QColor("#52e08d"))
         self.category_limit_edit.setBackgroundPressed(QColor("#1fad5a"))
 
         self.category_limit_edit.clicked.connect(self.setLimitCategory)
 
-        self.delete_category_limit = Button(name="Удалить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250, disabled_text="Выберите категорию для действия")
+        self.turn_category_limit = Button(name="Отключить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10,
+                                          maxs=250,  disabled_text="Выберите категорию для действия")
+        self.turn_category_limit.setBackgroundColor(QColor("#a9d6bc"))
+        self.turn_category_limit.setBackgroundHover(QColor("#aedbc1"))
+        self.turn_category_limit.setBackgroundPressed(QColor("#b7e1c8"))
+        self.turn_category_limit.clicked.connect(self.turnCategotyBlock)
+
+        self.delete_category_limit = Button(name="Удалить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10,
+                                            maxs=250, disabled_text="Выберите категорию для действия")
         self.delete_category_limit.setBackgroundColor(QColor("#bdcbc3"))
         self.delete_category_limit.setBackgroundHover(QColor("#a9bcb1"))
         self.delete_category_limit.setBackgroundPressed(QColor("#85a391"))
         self.delete_category_limit.clicked.connect(self.removeLimitCategory)
 
         btn_group_category.addWidget(self.category_limit_edit)
+        btn_group_category.addWidget(self.turn_category_limit)
         btn_group_category.addWidget(self.delete_category_limit)
 
         self.category_limit_edit.setDisabled(True)
+        self.turn_category_limit.setDisabled(True)
         self.delete_category_limit.setDisabled(True)
 
         self.category_limit_limit.setDisabled(True)
@@ -277,6 +297,13 @@ class Limit(QWidget):
 
         self.app_limit_edit.clicked.connect(self.setLimitApp)
 
+        self.turn_app_limit = Button(name="Отключить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250,
+                                     disabled_text="Выберите приложение для действия")
+        self.turn_app_limit.setBackgroundColor(QColor("#a9d6bc"))
+        self.turn_app_limit.setBackgroundHover(QColor("#aedbc1"))
+        self.turn_app_limit.setBackgroundPressed(QColor("#b7e1c8"))
+        self.turn_app_limit.clicked.connect(self.turnAppBlock)
+
         self.delete_app_limit = Button(name="Удалить лимит", align=Qt.AlignmentFlag.AlignCenter, radius=10, maxs=250,
                                        disabled_text="Выберите приложение для действия")
         self.delete_app_limit.setBackgroundColor(QColor("#bdcbc3"))
@@ -285,9 +312,11 @@ class Limit(QWidget):
         self.delete_app_limit.clicked.connect(self.removeLimitApp)
 
         btn_group_app.addWidget(self.app_limit_edit)
+        btn_group_app.addWidget(self.turn_app_limit)
         btn_group_app.addWidget(self.delete_app_limit)
 
         self.app_limit_edit.setDisabled(True)
+        self.turn_app_limit.setDisabled(True)
         self.delete_app_limit.setDisabled(True)
 
         self.app_limit_limit.setDisabled(True)
@@ -325,7 +354,9 @@ class Limit(QWidget):
 
     def reset_category_block(self):
         self.category_limit_today.setText(f"Сегодня: —")
+        self.turn_category_limit.setText(f"Отключить лимит")
         self.category_limit_edit.setDisabled(True)
+        self.turn_category_limit.setDisabled(True)
         self.delete_category_limit.setDisabled(True)
         self.category_limit_limit.setDisabled(True)
 
@@ -337,9 +368,38 @@ class Limit(QWidget):
 
         self.category_limit_today.setText(f"Сегодня: {today_time} из {normal_time(limit_cat, 'short')}" if limit_cat else f'Сегодня: {today_time}')
         self.category_limit_limit.setTime(time_for_qt(limit_cat))
+
+        category_limit, is_limit = get_category_limit(self.db_session, category)
+
+        print(is_limit)
+        if is_limit != 0 and is_limit is not None:
+            self.turn_category_limit.setText("Включить лимит" if category_limit == 0 else "Отлкючить лимит")
+            self.turn_category_limit.setDisabled(False)
+            self.turn_category_limit.setDisabledText("Выберите категорию для действия")
+        else:
+            self.turn_category_limit.setText("Включить лимит" if category_limit == 0 else "Отлкючить лимит")
+            self.turn_category_limit.setDisabled(True)
+            self.turn_category_limit.setDisabledText("У вас нет лимита на эту категорию")
+
         self.category_limit_limit.setDisabled(False)
         self.category_limit_edit.setDisabled(False)
         self.delete_category_limit.setDisabled(False)
+
+    def turnCategotyBlock(self):
+        category = self.category_limit_popup.currentText()
+        turn = turn_category_limit(self.db_session, category)
+
+        if turn:
+            self.set_category_block(category)
+            return
+
+    def turnAppBlock(self):
+        app = self.app_limit_text_edit.text()
+        turn = turn_app_limit(self.db_session, app)
+
+        if turn:
+            self.do_search()
+            return
 
     def on_text_changed(self, text):
         self.search_timer.start(250)
@@ -367,7 +427,19 @@ class Limit(QWidget):
         self.app_limit_limit.setTime(time_for_qt(count_lim))
         self.app_limit_limit.setDisabled(False)
         self.app_limit_edit.setDisabled(False)
-        self.delete_app_limit.setDisabled(False)
+
+        category_limit, is_limit = get_app_limit(self.db_session, app_name)
+
+        if is_limit != 0 and is_limit is not None:
+            self.turn_app_limit.setText("Включить лимит" if category_limit == 0 else "Отлкючить лимит")
+            self.turn_app_limit.setDisabled(False)
+            self.delete_app_limit.setDisabled(False)
+            self.turn_app_limit.setDisabledText("Выберите приложение для действия")
+        else:
+            self.turn_app_limit.setText("Включить лимит" if category_limit == 0 else "Отлкючить лимит")
+            self.turn_app_limit.setDisabled(True)
+            self.delete_app_limit.setDisabled(True)
+            self.turn_app_limit.setDisabledText("У вас нет лимита на это приложение")
 
     def setLimitApp(self):
         from Widgets.Modal.MessageTemplate import MessageTemplate
@@ -451,12 +523,39 @@ class Limit(QWidget):
 
             return
 
+    def turnLimitCommon(self):
+        from Widgets.Modal.MessageTemplate import MessageTemplate
+
+        state = get_settings(self.db_session, "state_limit_pc", int)
+        edit = set_settings(self.db_session, "state_limit_pc", not bool(state), int)
+
+        if edit:
+            if state == 0:
+                text = "включён"
+                self.turn_btn.setText("Отключить лимит")
+            else:
+                text = "отключён"
+                self.turn_btn.setText("Включить лимит")
+
+            MessageTemplate(title="Оповещение", text=f"Лимит для компьютера успешно {text}", msg_icon=QMessageBox.Icon.Information)
+
+            return
+
+    def get_turn(self):
+        state = get_settings(self.db_session, "state_limit_pc", int)
+
+        if state == 1:
+            return "Отключить лимит"
+        else:
+            return "Включить лимит"
+
     def removeLimitCommon(self):
         from Widgets.Modal.MessageTemplate import MessageTemplate
 
         edit = set_settings(self.db_session, "total_limit_pc", 0, int)
 
         if edit:
+            signal_edit.edit_or_delete_common_limit.emit(edit)
             MessageTemplate(title="Оповещение", text=f"Лимит для компьютера успешно удалён", msg_icon=QMessageBox.Icon.Information)
             self.updateTextCommonLimit()
 
@@ -468,6 +567,8 @@ class Limit(QWidget):
         common_limit_str = normal_time(common_limit, "short")
 
         today_time_str = normal_time(get_total_pc_time_today(self.db_session), "short")
+
+        signal_edit.edit_or_delete_common_limit.emit(common_limit)
 
         self.common_limit_text_db.setText(f"Сегодня: {today_time_str} из {common_limit_str}" if common_limit != 0 else "Без лимита")
         self.picker.setTime(time_for_qt(common_limit))

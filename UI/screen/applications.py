@@ -99,6 +99,8 @@ class Applications(QWidget):
         self.table_loader = TableDataLoader(SessionLocal)
 
         self.table = QTableView()
+        self.table.setSelectionMode(QTableView.SelectionMode.NoSelection)
+        self.table.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self.model = TableModel()
         self.model.dataChanged.connect(self.updAppPanelTime)

@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QSizePolicy
-from PySide6.QtGui import QColor, QPainter
+from PySide6.QtGui import QColor, QPainter, QPalette
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QRect
 from Widgets.Buttons.Button import Button
 
@@ -36,6 +36,11 @@ class PanelTemplate(QWidget):
         self.animation = QPropertyAnimation(self, b"geometry")
         self.animation.setDuration(300)
         self.animation.setEasingCurve(QEasingCurve.Type.InOutQuad)
+
+        style = self.palette()
+        style.setColor(QPalette.ColorRole.WindowText, QColor("white"))
+
+        self.setPalette(style)
 
         self.show()
 

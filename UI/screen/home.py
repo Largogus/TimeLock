@@ -7,6 +7,7 @@ from Widgets.Panels.SidePanel import SidePanel
 from Widgets.Wrapper import Wrapper
 from core.command.settings import get_settings
 from core.db.session import SessionLocalCash, SessionLocal
+from core.signals.edit_signals import signal_edit
 from core.system.date import today, normal_time
 from Widgets.Frame import BaseFrame
 from Widgets.CircleProgressBar import CircleProgressBar
@@ -55,13 +56,16 @@ class Home(QWidget):
         spacer = QSpacerItem(0, 20, QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         self.date_frame.addSpacer(spacer)
 
-        self.progress_bar = CircleProgressBar()
-
         common_limit = get_settings(self.db_session, "total_limit_pc", int)
+
+        self.progress_bar = CircleProgressBar(common_limit)
+
         if common_limit != 0:
             common_limit_str = f'Лимит: {normal_time(common_limit)}'
         else:
             common_limit_str = "Лимит не установлен"
+
+        signal_edit.edit_or_delete_common_limit.connect(self.update_limit)
 
         self.limit_label = QLabel(text=f"{common_limit_str}")
         self.limit_label.setMinimumWidth(125)
@@ -138,3 +142,13 @@ class Home(QWidget):
                 category_card.setObjectName(category)
                 category_card.clicked.connect(lambda checked, c=category_card: self.OpenSidePanel(c))
                 self.h.addWidget(category_card)
+
+    def update_limit(self, limit):
+        self.progress_bar.setLimit(limit)
+
+        if limit != 0:
+            common_limit_str = f'Лимит: {normal_time(limit)}'
+        else:
+            common_limit_str = "Лимит не установлен"
+
+        self.limit_label.setText(common_limit_str)
