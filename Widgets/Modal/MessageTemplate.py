@@ -20,7 +20,17 @@ def MessageTemplate(msg_icon: QMessageBox.Icon, text, title="Кнопка заб
     msg.setWindowFlags(msg.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
 
     msg.setStandardButtons(standard_btn)
-    ok_btn = msg.button(standard_btn)
-    ok_btn.setAutoFillBackground(False)
 
-    msg.exec()
+    if standard_btn & QMessageBox.StandardButton.Yes:
+        yes_btn = msg.button(QMessageBox.StandardButton.Yes)
+        yes_btn.setText("Да")
+    if standard_btn & QMessageBox.StandardButton.No:
+        no_btn = msg.button(QMessageBox.StandardButton.No)
+        no_btn.setText("Нет")
+
+    result = msg.exec()
+
+    if standard_btn & (QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No):
+        return result == QMessageBox.StandardButton.Yes
+    else:
+        return result == standard_btn

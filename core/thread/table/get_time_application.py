@@ -16,13 +16,19 @@ def get_time_application(session):
         session.query(
             AppSession.app_id.label("app_id"),
             func.sum(
-                func.strftime('%s', func.coalesce(AppSession.end_time, now)) -
-                func.strftime('%s', AppSession.start_time)
+                func.strftime(
+                    '%s',
+                    func.min(func.coalesce(AppSession.end_time, now), now)
+                ) -
+                func.strftime(
+                    '%s',
+                    func.max(AppSession.start_time, today_start)
+                )
             ).label("total_seconds")
         )
         .filter(
-            AppSession.start_time <= now,
-            func.coalesce(AppSession.end_time, now) >= today_start
+            AppSession.start_time < now,
+            func.coalesce(AppSession.end_time, now) > today_start,
         )
         .group_by(AppSession.app_id)
         .subquery()
@@ -34,8 +40,10 @@ def get_time_application(session):
             AppLimit,
             func.coalesce(total_time_subquery.c.total_seconds, 0)
         )
+        .select_from(App)
         .outerjoin(AppLimit, App.id == AppLimit.app_id)
         .outerjoin(total_time_subquery, App.id == total_time_subquery.c.app_id)
+        .filter(App.status == "tracking")
     )
 
     apps_data = []
@@ -50,7 +58,8 @@ def get_time_application(session):
             "category": app.category,
             "today_time": normal_time(total_seconds, "short"),
             "limit": limit,
-            "status": total_seconds < limit if limit else True
+            "status": total_seconds < limit if limit else True,
+            "state": app.status
         })
 
     return apps_data

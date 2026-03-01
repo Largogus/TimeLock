@@ -1,11 +1,12 @@
 from PySide6.QtGui import QColor
-from PySide6.QtWidgets import QVBoxLayout, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QVBoxLayout, QLabel, QHBoxLayout, QMessageBox
 from PySide6.QtCore import Qt
 from Widgets.Buttons.Button import Button
 from Widgets.Line import Line
 from Widgets.Modal.CategoryModal import CategoryModal
 from Widgets.Panels.PanelTemplate import PanelTemplate
 from Widgets.Wrapper import Wrapper
+from core.db.session import SessionLocal
 from core.signals.change_signals import signal_change
 from core.system.date import normal_time
 
@@ -22,6 +23,7 @@ class AppPanel(PanelTemplate):
         self.setFont(font_label)
 
         self.app = ""
+        self.app_id = None
 
         self.name_app = QLabel()
         wrapper = Wrapper(self.name_app)
@@ -95,6 +97,8 @@ class AppPanel(PanelTemplate):
         self.not_visible.setBackgroundHover(QColor('#6B7280'))
         self.not_visible.setBackgroundPressed(QColor('#6B7280'))
 
+        self.not_visible.clicked.connect(lambda: self.on_delete(self.app, self.app_id))
+
         self.delete_stat.setBackgroundColor(QColor('#6B7280'))
         self.delete_stat.setBackgroundHover(QColor('#6B7280'))
         self.delete_stat.setBackgroundPressed(QColor('#6B7280'))
@@ -126,6 +130,7 @@ class AppPanel(PanelTemplate):
         self.category_app.setText(f'Категория: {name.get("category", "Unknown")}')
         self.statistic_today.setText(f'Сегодня: {name.get("today", "Unknown")}')
         self.statistic_for_seven_day.setText(f'Среднее за неделю: {normal_time((name.get("middle_time", "Unknown")), "short")}')
+        self.app_id = name.get("id")
 
         limit = (name.get("limit", "Unknown"))
         self.limit_title.setText(f'Лимит: {limit if limit != "Нет" else "не установлен"}')
@@ -141,3 +146,16 @@ class AppPanel(PanelTemplate):
         self.category_modal = CategoryModal(self.app)
 
         self.category_modal.show()
+
+    def on_delete(self, data, id):
+        from core.command.dont_tracking import dont_tracking
+        from Widgets.Modal.MessageTemplate import MessageTemplate
+        modal = MessageTemplate(
+            msg_icon=QMessageBox.Icon.Question,
+            text=f"Вы уверены, что хотите перестать отслеживать {data}",
+            title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if modal:
+            db_session = SessionLocal()
+            dont_tracking(db_session, id)

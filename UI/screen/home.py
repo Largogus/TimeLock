@@ -1,4 +1,4 @@
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem
 from PySide6.QtGui import QColor, QPalette
 from Widgets.Buttons.Button import Button
@@ -10,7 +10,7 @@ from core.db.session import SessionLocalCash, SessionLocal
 from core.signals.edit_signals import signal_edit
 from core.system.date import today, normal_time
 from Widgets.Frame import BaseFrame
-from Widgets.CircleProgressBar import CircleProgressBar
+from Widgets.ProgressBar.CircleProgressBar import CircleProgressBar
 from core.signals.tracker_signals import signal
 from core.thread.category.top_category import TopCategory
 from core.system.config import FONT_FAMILY

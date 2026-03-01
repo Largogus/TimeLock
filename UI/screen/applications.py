@@ -1,5 +1,6 @@
 from PySide6.QtGui import QFont, Qt, QColor, QPalette
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QTableView, QHeaderView, QMenu
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QTableView, QHeaderView, QMenu, \
+    QMessageBox
 from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Modal.CategoryModal import CategoryModal
@@ -9,7 +10,9 @@ from Style.MenuStyle import MenuStyle
 from Widgets.TextEdit import TextEdit
 from Widgets.Wrapper import Wrapper
 from core.command.category_command import get_category
+from core.command.dont_tracking import dont_tracking
 from core.command.settings import get_settings
+from core.dataset.roles import IdRole
 from core.db.session import SessionLocal
 from core.statistic.middle_time import get_middle_time
 from core.thread.table.table_data_loader import TableDataLoader
@@ -18,6 +21,7 @@ from core.widgets.abstract_model_table import TableModel
 from Widgets.Panels.AppPanel import AppPanel
 from core.signals.table_signals import signal
 from core.signals.change_signals import signal_change
+from loguru import logger
 
 
 class Applications(QWidget):
@@ -192,14 +196,30 @@ class Applications(QWidget):
         change_category_action = menu.addAction("Изменить категорию")
         change_limit_menu = menu.addAction("Установить / изменить лимит")
         menu.addAction("Заблокировать приложение")
-        menu.addAction("Не отслеживать приложение")
+        delete_app = menu.addAction("Не отслеживать приложение")
 
         cat_modal = CategoryModal(index.data(Qt.ItemDataRole.UserRole))
 
         data = index.data(Qt.ItemDataRole.UserRole)
+        id = index.data(IdRole)
 
         change_category_action.triggered.connect(lambda: cat_modal.show())
         change_limit_menu.triggered.connect(lambda: signal_change.limit_screen.emit(2, data, "app"))
+
+        def on_delete():
+            logger.debug(f"{data} {id}")
+            from core.command.dont_tracking import dont_tracking
+            from Widgets.Modal.MessageTemplate import MessageTemplate
+            modal = MessageTemplate(
+                msg_icon=QMessageBox.Icon.Question,
+                text=f"Вы уверены, что хотите перестать отслеживать {data}",
+                title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if modal:
+                dont_tracking(self.db_session, id)
+
+        delete_app.triggered.connect(on_delete)
 
         rect = self.table.visualRect(index)
         pos = self.table.viewport().mapToGlobal(rect.bottomLeft())
@@ -217,6 +237,7 @@ class Applications(QWidget):
         for inx, col in enumerate(range(model.columnCount())):
             info = model.index(row, col).data()
             app_id = model.index(row, col).data(Qt.ItemDataRole.UserRole)
+            id = model.index(row, col).data(IdRole)
 
             if inx == 0: data['name'] = info
             if inx == 1: data['category'] = info
@@ -225,6 +246,8 @@ class Applications(QWidget):
 
             if col != 5:
                 data['middle_time'] = get_middle_time(self.table_loader.db_session_factory, app_id)
+
+            data['id'] = id
 
         self.appPanel.reopen(data, self.appPanel.setDate)
 
@@ -237,6 +260,7 @@ class Applications(QWidget):
         for inx, col in enumerate(range(model.columnCount())):
             info = model.index(row, col).data()
             app_id = model.index(row, col).data(Qt.ItemDataRole.UserRole)
+            id = model.index(row, col).data(IdRole)
 
             if inx == 0: data['name'] = info
             if inx == 1: data['category'] = info
@@ -245,6 +269,8 @@ class Applications(QWidget):
 
             if col != 5:
                 data['middle_time'] = get_middle_time(self.table_loader.db_session_factory, app_id)
+
+            data['id'] = id
 
         self.appPanel.setDate(data)
 

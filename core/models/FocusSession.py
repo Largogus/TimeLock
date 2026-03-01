@@ -1,22 +1,19 @@
-from sqlalchemy import Integer, DateTime, Column, Boolean
+from sqlalchemy import Integer, DateTime, ForeignKey, Column
 from sqlalchemy.orm import relationship
-from datetime import datetime
 from core.db.base import Base
 
 
 class FocusSession(Base):
-    __tablename__ = "focus_sessions"
+    __tablename__ = "focus_session"
 
     id = Column(Integer, primary_key=True)
-    start_time = Column(DateTime, default=datetime.now)
-    end_time = Column(DateTime, nullable=True)
-    is_active = Column(Boolean, default=True)
+    app_id = Column(Integer, ForeignKey("apps.id"), nullable=False, index=True)
 
-    focus_allowed_entries = relationship(
-        "FocusAllowed",
-        back_populates="focus_session",
-        cascade="all, delete-orphan"
-    )
+    start_time = Column(DateTime, nullable=False, index=True)
+    end_time = Column(DateTime, index=True)
+
+    app = relationship("App", back_populates="sessions")
 
     def __repr__(self):
-        return f"<FocusSession(id={self.id}, active={self.is_active})>"
+        app_name = self.app.name if self.app else "Unknown"
+        return f"<AppSession(name={app_name})>"

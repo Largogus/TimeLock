@@ -7,14 +7,8 @@ class FocusAllowed(Base):
     __tablename__ = "focus_allowed"
 
     id = Column(Integer, primary_key=True)
-    focus_id = Column(Integer, ForeignKey("focus_sessions.id"), nullable=False)
     app_id = Column(Integer, ForeignKey("apps.id"), nullable=True)
     category = Column(String, nullable=True)
-
-    focus_session = relationship(
-        "FocusSession",
-        back_populates="focus_allowed_entries"
-    )
 
     app = relationship(
         "App",

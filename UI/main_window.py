@@ -2,6 +2,7 @@ from PySide6.QtGui import QColor, QIcon, QPixmap
 from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QSpacerItem
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Qt
 from UI.screen.applications import Applications
+from UI.screen.focus import Focus
 from UI.screen.limit import Limit
 from core.system.desktop import DesktopSize
 from Widgets.Buttons.Button import Button
@@ -115,6 +116,7 @@ class MainWindow(QMainWindow):
         self.stacked.addWidget(Home())
         self.stacked.addWidget(Applications())
         self.stacked.addWidget(Limit())
+        self.stacked.addWidget(Focus())
         self.sidebar.mainLayout.addStretch(1)
         layout.addWidget(self.sidebar)
         layout.addWidget(self.stacked)
@@ -161,6 +163,8 @@ class MainWindow(QMainWindow):
             self.stacked.setCurrentIndex(1)
         elif data == "Лимиты":
             self.stacked.setCurrentIndex(2)
+        elif data == "Фокус":
+            self.stacked.setCurrentIndex(3)
 
     def resizeEvent(self, event):
         width = self.width()

@@ -1,5 +1,8 @@
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 
+from core.dataset.roles import IdRole
+from core.system.date import normal_time
+
 
 class TableModel(QAbstractTableModel):
     def __init__(self):
@@ -8,11 +11,16 @@ class TableModel(QAbstractTableModel):
         self.apps_data = []
 
     def update_data(self, apps_data):
-        new_apps_dict = {app["id"]: app for app in apps_data}
+        active_apps = [app for app in apps_data if app.get("is_tracking", True)]
+
+        new_apps_dict = {app["id"]: app for app in active_apps}
+
+        rows_to_remove = []
 
         for row, app in enumerate(self.apps_data):
             new_app = new_apps_dict.get(app["id"])
             if not new_app:
+                rows_to_remove.append(row)
                 continue
 
             changed_columns = []
@@ -28,6 +36,11 @@ class TableModel(QAbstractTableModel):
             for col in changed_columns:
                 index = self.index(row, col)
                 self.dataChanged.emit(index, index, [Qt.ItemDataRole.DisplayRole])
+
+        for row in reversed(rows_to_remove):
+            self.beginRemoveRows(QModelIndex(), row, row)
+            del self.apps_data[row]
+            self.endRemoveRows()
 
         existing_ids = {app["id"] for app in self.apps_data}
         for new_app in apps_data:
@@ -61,7 +74,7 @@ class TableModel(QAbstractTableModel):
             if col == 2:
                 return app["today_time"]
             if col == 3:
-                return app["limit"] if app['limit'] != 0 else "Нет"
+                return normal_time(app["limit"], "short") if app['limit'] != 0 else "Нет"
             if col == 4:
                 return "🟢" if app["status"] else "🔴"
             if col == 5:
@@ -72,6 +85,9 @@ class TableModel(QAbstractTableModel):
                 return app['name']
             else:
                 return app["id"]
+
+        if role == IdRole:
+            return app["id"]
 
         if role == Qt.ItemDataRole.TextAlignmentRole and col != 0:
             return Qt.AlignmentFlag.AlignCenter

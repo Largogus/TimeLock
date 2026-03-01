@@ -12,6 +12,8 @@ class AppSession(Base):
     start_time = Column(DateTime, nullable=False, index=True)
     end_time = Column(DateTime, index=True)
 
+    focus_mode = Column(Integer, nullable=False, default=0)
+
     app = relationship("App", back_populates="sessions")
 
     def __repr__(self):

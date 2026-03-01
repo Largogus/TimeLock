@@ -7,9 +7,24 @@ from core.models.CategoryLimit import CategoryLimit
 from sqlalchemy import func, and_
 
 
-def get_all_app(db_session):
-    session = db_session.query(App).all()
-    list_session = [app.name for app in session]
+def get_all_app(db_session, is_id: bool = False):
+    session = db_session.query(App).filter(App.status == "tracking").all()
+
+    if not is_id:
+        list_session = [app.name for app in session]
+    else:
+        list_session = [(app.name, app.id) for app in session]
+
+    return list_session
+
+
+def get_all_app_with_category(db_session, category, is_id: bool = False):
+    session = db_session.query(App).filter(and_(App.status == "tracking", App.category == category)).all()
+
+    if not is_id:
+        list_session = [app.name for app in session]
+    else:
+        list_session = [(app.name, app.id) for app in session]
 
     return list_session
 

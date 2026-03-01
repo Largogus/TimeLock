@@ -1,6 +1,6 @@
 from PySide6.QtCore import QThread, Signal
 from sqlalchemy import desc, func
-from datetime import datetime, date
+from datetime import datetime, date, time
 from core.models.App import App
 from core.models.AppSession import AppSession
 from loguru import logger
@@ -21,15 +21,16 @@ class TopCategory(QThread):
                 try:
                     db_session.expire_all()
 
-                    start_of_day = datetime.combine(date.today(), datetime.min.time())
                     now = datetime.now()
+                    today_start = datetime.combine(date.today(), time.min)
 
                     sessions = (
                         db_session.query(AppSession)
                         .join(App)
                         .filter(
-                            AppSession.start_time <= now,
-                            func.coalesce(AppSession.end_time, now) >= start_of_day
+                            AppSession.start_time < now,
+                            func.coalesce(AppSession.end_time, now) > today_start,
+                            App.status == "tracking"
                         )
                         .all()
                     )
@@ -39,7 +40,7 @@ class TopCategory(QThread):
                     top_categories = {}
 
                     for session in sessions:
-                        real_start = max(session.start_time, start_of_day)
+                        real_start = max(session.start_time, today_start)
                         real_end = min(session.end_time or now, now)
 
                         seconds = int((real_end - real_start).total_seconds())
