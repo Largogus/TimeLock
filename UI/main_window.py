@@ -3,7 +3,10 @@ from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QHBoxLayout,
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Qt
 from UI.screen.applications import Applications
 from UI.screen.focus import Focus
+from UI.screen.history import History
 from UI.screen.limit import Limit
+from UI.screen.statistics import Statistics
+from core.signals.statistics_signsl import stats_signal
 from core.system.desktop import DesktopSize
 from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
@@ -117,6 +120,8 @@ class MainWindow(QMainWindow):
         self.stacked.addWidget(Applications())
         self.stacked.addWidget(Limit())
         self.stacked.addWidget(Focus())
+        self.stacked.addWidget(Statistics())
+        self.stacked.addWidget(History())
         self.sidebar.mainLayout.addStretch(1)
         layout.addWidget(self.sidebar)
         layout.addWidget(self.stacked)
@@ -165,6 +170,12 @@ class MainWindow(QMainWindow):
             self.stacked.setCurrentIndex(2)
         elif data == "Фокус":
             self.stacked.setCurrentIndex(3)
+        elif data == "Статистика":
+            self.stacked.setCurrentIndex(4)
+            stats_signal.upd_stats.emit()
+        elif data == "История":
+            self.stacked.setCurrentIndex(5)
+            stats_signal.upd_history.emit()
 
     def resizeEvent(self, event):
         width = self.width()

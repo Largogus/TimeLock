@@ -1,17 +1,15 @@
-from PySide6.QtGui import QFont, Qt, QColor, QPalette
+from PySide6.QtGui import Qt, QColor, QPalette
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QHBoxLayout, QSizePolicy, QTableView, QHeaderView, QMenu, \
     QMessageBox
 from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Modal.CategoryModal import CategoryModal
-from Widgets.PopUp import PopUp
+from Widgets.ComboBoxes.PopUp import PopUp
 from Style.TableStyle import TableDelegate
 from Style.MenuStyle import MenuStyle
 from Widgets.TextEdit import TextEdit
 from Widgets.Wrapper import Wrapper
 from core.command.category_command import get_category
-from core.command.dont_tracking import dont_tracking
-from core.command.settings import get_settings
 from core.dataset.roles import IdRole
 from core.db.session import SessionLocal
 from core.statistic.middle_time import get_middle_time

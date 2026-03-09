@@ -79,9 +79,7 @@ class Focus(QWidget):
         self.focus_allowed.setBackgroundHover(QColor("#7eeda1"))
         self.focus_allowed.setBackgroundPressed(QColor("#baf8cd"))
 
-        fam = FocusAllowedModal()
-
-        self.focus_allowed.clicked.connect(lambda: fam.show())
+        self.focus_allowed.clicked.connect(lambda: FocusAllowedModal().show())
 
         self.focus_start = Button(name="Включить фокус", align=Qt.AlignmentFlag.AlignCenter, radius=8)
         self.focus_start.setMinimumWidth(400)

@@ -1,23 +1,18 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QTabWidget, QListView, QLabel, QSizePolicy, QCompleter, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QListView, QLabel, QSizePolicy, QCompleter, QHBoxLayout
 from PySide6.QtGui import QFont, QIcon, QPalette, QColor, QStandardItem, QStandardItemModel
-from PySide6.QtCore import Qt, Signal, QSortFilterProxyModel, QTimer
+from PySide6.QtCore import Qt, QSortFilterProxyModel
 
 from Style.PopupStyle import PopupStyle
 from Widgets.Buttons.Button import Button
 from Widgets.Line import Line
-from Widgets.PopUp import PopUp
+from Widgets.ComboBoxes.PopUp import PopUp
 from Widgets.TextEdit import TextEdit
 from core.command.category_command import get_category
 from core.command.focus_command import is_focus_allowed, set_focus_allowed
 from core.command.get_all_app import get_all_app, get_all_app_with_category
-from core.command.settings import get_settings
-from core.models.App import App
 from core.system.desktop import DesktopSize
 from core.system.config import FONT_FAMILY, ICON_PATH
 from core.db.session import SessionLocal
-from loguru import logger
-
-from core.widgets.change_category import changeCategory
 
 
 class FocusAllowedModal(QWidget):

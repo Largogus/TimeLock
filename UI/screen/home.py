@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem
 from PySide6.QtGui import QColor, QPalette
 from Widgets.Buttons.Button import Button
-from Widgets.CategoryCard import CategoryCard
+from Widgets.Cards.CategoryCard import CategoryCard
 from Widgets.Panels.SidePanel import SidePanel
 from Widgets.Wrapper import Wrapper
 from core.command.settings import get_settings

@@ -1,14 +1,11 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PySide6.QtGui import QFont, QIcon, QPalette, QColor
-from PySide6.QtCore import Qt, Signal
-from Widgets.PopUp import PopUp
+from PySide6.QtCore import Qt
+from Widgets.ComboBoxes.PopUp import PopUp
 from core.command.category_command import get_category
-from core.command.settings import get_settings
-from core.models.App import App
 from core.system.desktop import DesktopSize
 from core.system.config import FONT_FAMILY, ICON_PATH
 from core.db.session import SessionLocal
-from loguru import logger
 
 from core.widgets.change_category import changeCategory
 

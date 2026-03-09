@@ -14,7 +14,9 @@
     "searchhost.exe",
     "werfault.exe",
     "dwm.exe",
-    "startmenuexperiencehost.exe"
+    "startmenuexperiencehost.exe",
+    "shellexperiencehost.exe",
+    "openwith.exe"
   ],
   "friendly_process": {
     "Notepad.exe": "Блокнот",

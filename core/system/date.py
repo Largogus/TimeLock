@@ -38,27 +38,41 @@ def today() -> str:
     return f"{day} {month}"
 
 
-def normal_time(time: int, format: str = "standard") -> str:
+def normal_time(time: int, format: str = "standard", with_sec: bool = False) -> str:
     """:param format: standard - '7 часов' , full - '7 часов 0 минут', short - '7ч'"""
 
     minutes = int((time % 3600) // 60)
     hours = int(time // 3600)
+    seconds = time % 60
 
     f_h = plural(hours, ("час", "часа", "часов")) if format in ("standard", "full") else "ч"
     f_m = plural(minutes, ("минута", "минуты", "минут")) if format in ("standard", "full") else "м"
+    f_s = plural(seconds, ("секунда", "секунды", "секунд")) if format in ("standard", "full") else "с"
 
-    if minutes == 0 and hours == 0 and format != 'full':
-        return f"{minutes} {f_m}"
+    if format == "short":
+        parts = []
+        if hours > 0:
+            parts.append(f"{hours} ч")
+        if minutes > 0:
+            parts.append(f"{minutes} м")
+        if with_sec and seconds > 0:
+            parts.append(f"{seconds} с")
+        return " ".join(parts) if parts else "0 м"
 
-    if minutes == 0 and format != 'full':
-        return f"{hours} {f_h}"
+    if format == "standard":
+        if hours > 0 and minutes == 0:
+            return f"{hours} {f_h}"
+        if hours == 0 and minutes >= 0 and not with_sec:
+            return f"{minutes} {f_m}"
+        if hours == 0 and minutes == 0 and with_sec:
+            return f"{seconds} {f_s}"
+        return f"{hours} {f_h} {minutes} {f_m}"
 
-    if hours == 0 and format != 'full':
-        return f"{minutes} {f_m}"
-
-    res = f"{hours} {f_h} {minutes} {f_m}"
-
-    return res
+    if format == "full":
+        result = f"{hours} {f_h} {minutes} {f_m}"
+        if with_sec:
+            result += f" {seconds} {f_s}"
+        return result
 
 
 def to_time(time: int, format: str = 'h') -> int:

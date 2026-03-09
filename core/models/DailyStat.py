@@ -14,6 +14,9 @@ class DailyStat(Base):
     total_seconds = Column(Integer, default=0)
     sessions_count = Column(Integer, default=0)
 
+    focus_seconds = Column(Integer, default=0)
+    focus_count = Column(Integer, default=0)
+
     app = relationship("App")
 
     def __repr__(self):

@@ -1,13 +1,13 @@
-from PySide6.QtCore import Qt, QTimer, QTime, Signal
+from PySide6.QtCore import Qt, QTimer, QTime
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowEffect, QTimeEdit, QHBoxLayout, \
-    QCompleter, QFrame, QAbstractItemView, QMessageBox
+    QCompleter, QMessageBox
 
 from Style.PopupStyle import PopupStyle
 from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
-from Widgets.PopUp import PopUp
+from Widgets.ComboBoxes.PopUp import PopUp
 from Widgets.TextEdit import TextEdit
 from core.command.category_command import get_category, count_time_category, count_limit_category
 from core.command.edit_limit import edit_limit_app, edit_limit_category, delete_limit_app, delete_limit_category, \
@@ -351,6 +351,7 @@ class Limit(QWidget):
 
         signal_change.limit_category.connect(self.category_limit_popup.setCurrentText)
         signal_change.limit_app.connect(self.app_limit_text_edit.setText)
+        signal_edit.upd_limit.connect(self.updateTextCommonLimit)
 
     def reset_category_block(self):
         self.category_limit_today.setText(f"Сегодня: —")
