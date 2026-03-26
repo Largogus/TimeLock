@@ -12,7 +12,6 @@ from UI import main_window
 from sys import argv, exit
 from loguru import logger
 from core.signals.tracker_signals import signal
-from core.system.config import SETTINGS
 from core.widgets.notification_manager import NotificationManager
 
 LOG_DIR = Path("logs")
@@ -40,8 +39,11 @@ def main():
     from core.db.session import SessionLocal
     from core.thread.main.tracker import TrackerThread
     from core.system.config import FONT_FAMILY
+    from core.system.config import SETTINGS, refresh_settings
 
     init_db()
+
+    refresh_settings()
 
     app = QApplication(argv)
 

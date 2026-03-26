@@ -79,7 +79,7 @@ DEFAULT_SETTINGS = _config["default_settings"]
 
 ICON_PATH = str(ICON_PATH)
 
-SETTINGS = get_settings()
+SETTINGS = {}
 
 core_events.settings_edited.connect(refresh_settings)
 
