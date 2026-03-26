@@ -29,6 +29,10 @@ class TableModel(QAbstractTableModel):
                 app["today_time"] = new_app["today_time"]
                 changed_columns.append(2)
 
+            if app["limit"] != new_app["limit"]:
+                app["limit"] = new_app["limit"]
+                changed_columns.append(3)
+
             if app["status"] != new_app["status"]:
                 app["status"] = new_app["status"]
                 changed_columns.append(4)

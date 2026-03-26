@@ -18,7 +18,6 @@ class Button(QPushButton):
                  scale: int = 0,
                  icon_size: int = 24,
                  margin: int = 6,
-                 indicator: bool = False,
                  align: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignLeft,
                  argument: str | int = None,
                  disabled_text: str = ""):
@@ -31,7 +30,6 @@ class Button(QPushButton):
         self.BG_COLOR = QColor('#B6B6B6')
         self.PRESSER_COLOR = QColor('#969696')
         self.HOVERED_COLOR = QColor('#ADADAD')
-        self.INDICATOR_COLOR = QColor("#5bff3b")
         self.ALPHA = alpha if alpha is not None else [255, 255, 255]
         self.RATIO = ratio
         self.SCALE = scale
@@ -41,8 +39,6 @@ class Button(QPushButton):
         self.DISABLED = False
 
         self.ICON_SIZE = icon_size
-
-        self.INDICATOR = indicator
 
         self.alpha_color, self.alpha_hover, self.alpha_pressed = [i for i in self.ALPHA]
 
@@ -65,11 +61,6 @@ class Button(QPushButton):
         self.setMouseTracking(True)
 
         self.renderer = QSvgRenderer(svg_path) if svg_path else None
-
-        if self.INDICATOR:
-            self.indicator_anim = QPropertyAnimation(self, b"indicatorColor")
-            self.indicator_anim.setDuration(400)
-            self.INDICATOR_OFFSET = self.RADIUS * 2 + self.MARGIN
 
     def paintEvent(self, event):
         paint = QPainter(self)
@@ -123,12 +114,6 @@ class Button(QPushButton):
         else:
             text_rect = QRectF(draw_rect)
 
-        if self.INDICATOR:
-            text_rect.setLeft(rect.left() + (10 * 4))
-            paint.setBrush(self.INDICATOR_COLOR)
-            paint.setPen(Qt.PenStyle.NoPen)
-            paint.drawEllipse(self.INDICATOR_OFFSET, self.INDICATOR_OFFSET - 1, self.RADIUS * 2, self.RADIUS * 2)
-
         painter_font = paint.font()
         painter_font.setPixelSize(self.FONT_SIZE)
         painter_font.setWeight(QFont.Weight.Bold)
@@ -172,13 +157,6 @@ class Button(QPushButton):
     def getArg(self) -> str | int:
         return self.ARG
 
-    def getIndicatorColor(self):
-        return self.INDICATOR_COLOR
-
-    def setIndicatorColor(self, color: QColor):
-        self.INDICATOR_COLOR = color
-        self.update()
-
     def enterEvent(self, event):
         self.hovered = True
         self.update()
@@ -195,17 +173,4 @@ class Button(QPushButton):
 
             return
 
-        if self.INDICATOR:
-            self.indicator_anim.stop()
-            self.indicator_anim.setStartValue(self.INDICATOR_COLOR)
-
-            if self.getIndicatorColor() == QColor("#5bff3b"):
-                self.indicator_anim.setEndValue(QColor("#c41000"))
-            else:
-                self.indicator_anim.setEndValue(QColor("#5bff3b"))
-
-            self.indicator_anim.start()
-
         super().mousePressEvent(event)
-
-    indicatorColor = Property(QColor, lambda self: self.INDICATOR_COLOR, lambda self, c: self.setIndicatorColor(c))

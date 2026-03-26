@@ -7,8 +7,9 @@ from Widgets.Modal.CategoryModal import CategoryModal
 from Widgets.ComboBoxes.PopUp import PopUp
 from Style.TableStyle import TableDelegate
 from Style.MenuStyle import MenuStyle
-from Widgets.TextEdit import TextEdit
+from Widgets.TextsEdits.TextEdit import TextEdit
 from Widgets.Wrapper import Wrapper
+from core.command.block_app import add_block_app, is_blocked
 from core.command.category_command import get_category
 from core.dataset.roles import IdRole
 from core.db.session import SessionLocal
@@ -191,15 +192,22 @@ class Applications(QWidget):
     def small_menu(self, index):
         menu = QMenu(self)
 
-        change_category_action = menu.addAction("Изменить категорию")
-        change_limit_menu = menu.addAction("Установить / изменить лимит")
-        menu.addAction("Заблокировать приложение")
-        delete_app = menu.addAction("Не отслеживать приложение")
-
         cat_modal = CategoryModal(index.data(Qt.ItemDataRole.UserRole))
 
         data = index.data(Qt.ItemDataRole.UserRole)
         id = index.data(IdRole)
+
+        change_category_action = menu.addAction("Изменить категорию")
+        change_limit_menu = menu.addAction("Установить / изменить лимит")
+
+        state = is_blocked(data, SessionLocal(), app_is_name=True)
+
+        if state:
+            block_app = menu.addAction("Разблокировать приложение")
+        else:
+            block_app = menu.addAction("Заблокировать приложение")
+
+        delete_app = menu.addAction("Не отслеживать приложение")
 
         change_category_action.triggered.connect(lambda: cat_modal.show())
         change_limit_menu.triggered.connect(lambda: signal_change.limit_screen.emit(2, data, "app"))
@@ -217,7 +225,20 @@ class Applications(QWidget):
             if modal:
                 dont_tracking(self.db_session, id)
 
+        def on_blocked():
+            from Widgets.Modal.MessageTemplate import MessageTemplate
+            modal = MessageTemplate(
+                msg_icon=QMessageBox.Icon.Question,
+                text=f"Вы уверены, что хотите заблокировать {data}?",
+                title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+
+            if modal:
+                db_session = SessionLocal()
+                add_block_app(data, db_session)
+
         delete_app.triggered.connect(on_delete)
+        block_app.triggered.connect(on_blocked)
 
         rect = self.table.visualRect(index)
         pos = self.table.viewport().mapToGlobal(rect.bottomLeft())

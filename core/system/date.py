@@ -64,6 +64,8 @@ def normal_time(time: int, format: str = "standard", with_sec: bool = False) -> 
             return f"{hours} {f_h}"
         if hours == 0 and minutes >= 0 and not with_sec:
             return f"{minutes} {f_m}"
+        if hours == 0 and minutes > 0 and with_sec:
+            return f"{minutes} {f_m}"
         if hours == 0 and minutes == 0 and with_sec:
             return f"{seconds} {f_s}"
         return f"{hours} {f_h} {minutes} {f_m}"

@@ -8,7 +8,6 @@ class FocusAllowed(Base):
 
     id = Column(Integer, primary_key=True)
     app_id = Column(Integer, ForeignKey("apps.id"), nullable=True)
-    category = Column(String, nullable=True)
 
     app = relationship(
         "App",

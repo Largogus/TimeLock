@@ -2,7 +2,7 @@ from core.models.App import App
 from loguru import logger
 
 
-def dont_tracking(db_session, app_id):
+def dont_tracking(db_session, app_id,):
     try:
         app = (db_session.query(App)
             .filter(App.id == app_id)

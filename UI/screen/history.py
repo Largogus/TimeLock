@@ -5,11 +5,11 @@ from Style.PopupStyle import PopupStyle
 from Widgets.Cards.HistoryCard import HistoryCard
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
-from Widgets.TextEdit import TextEdit
+from Widgets.TextsEdits.TextEdit import TextEdit
 from Widgets.Wrapper import Wrapper
 from core.db.session import SessionLocal
 from core.signals.statistics_signsl import stats_signal
-from core.statistic.history_stats import get_history, get_history_session
+from core.statistic.history_stats import get_history_session
 from core.system.config import FONT_FAMILY
 from core.system.date import normal_time
 from core.thread.stat.get_stat_info import StatisticThread
@@ -165,6 +165,7 @@ class History(QWidget):
 
         self.main.addLayout(h_list)
         layout.addWidget(self.main)
+        layout.addSpacing(-20)
 
         self.setLayout(layout)
 
@@ -178,7 +179,6 @@ class History(QWidget):
                 widget.hide()
 
     def setData(self, history: list):
-        print(history)
         self.model.setStringList([])
         self.clear_layout(self.lay)
 
@@ -236,6 +236,8 @@ class History(QWidget):
 
             self.lay_details.addWidget(self.detail_label)
             self.lay_details.addSpacing(25)
+
+        self.lay_details.addStretch()
 
     def clear_layout(self, layout):
         while layout.count():

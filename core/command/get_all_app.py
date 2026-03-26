@@ -18,6 +18,17 @@ def get_all_app(db_session, is_id: bool = False):
     return list_session
 
 
+def get_ignored_app(db_session, is_id: bool = False):
+    session = db_session.query(App).filter(App.status == "ignored").all()
+
+    if not is_id:
+        list_session = [app.name for app in session]
+    else:
+        list_session = [(app.name, app.id) for app in session]
+
+    return list_session
+
+
 def get_all_app_with_category(db_session, category, is_id: bool = False):
     session = db_session.query(App).filter(and_(App.status == "tracking", App.category == category)).all()
 

@@ -5,6 +5,7 @@ from UI.screen.applications import Applications
 from UI.screen.focus import Focus
 from UI.screen.history import History
 from UI.screen.limit import Limit
+from UI.screen.settings import Settings
 from UI.screen.statistics import Statistics
 from core.signals.statistics_signsl import stats_signal
 from core.system.desktop import DesktopSize
@@ -122,6 +123,7 @@ class MainWindow(QMainWindow):
         self.stacked.addWidget(Focus())
         self.stacked.addWidget(Statistics())
         self.stacked.addWidget(History())
+        self.stacked.addWidget(Settings())
         self.sidebar.mainLayout.addStretch(1)
         layout.addWidget(self.sidebar)
         layout.addWidget(self.stacked)
@@ -176,6 +178,8 @@ class MainWindow(QMainWindow):
         elif data == "История":
             self.stacked.setCurrentIndex(5)
             stats_signal.upd_history.emit()
+        elif data == "Настройки":
+            self.stacked.setCurrentIndex(6)
 
     def resizeEvent(self, event):
         width = self.width()

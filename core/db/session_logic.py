@@ -4,10 +4,15 @@ from core.db.session import SessionLocal
 from datetime import datetime
 
 
-def handle_session(app: App, db_session: SessionLocal):
+_last_focus = 0
+
+
+def handle_session(app: App, db_session: SessionLocal, focus: int = 0):
+    global _last_focus
+
     active_session = db_session.query(AppSession).filter_by(end_time=None).first()
 
-    if active_session and active_session.app_id == app.id:
+    if active_session and active_session.app_id == app.id and focus == _last_focus:
         return
 
     if active_session:
@@ -15,11 +20,14 @@ def handle_session(app: App, db_session: SessionLocal):
 
     new_session = AppSession(
         app_id=app.id,
-        start_time=datetime.now()
+        start_time=datetime.now(),
+        focus_mode=focus
     )
 
     db_session.add(new_session)
     db_session.commit()
+
+    _last_focus = focus
 
 
 def close_session(db_session: SessionLocal):

@@ -16,7 +16,8 @@
     "dwm.exe",
     "startmenuexperiencehost.exe",
     "shellexperiencehost.exe",
-    "openwith.exe"
+    "openwith.exe",
+    "lockapp.exe"
   ],
   "friendly_process": {
     "Notepad.exe": "Блокнот",
@@ -28,5 +29,17 @@
   "ui": {
     "font_family": "Segoe UI",
     "font_size": 12
+  },
+  "default_settings": {
+    "tracking_interval_seconds": 1,
+    "total_limit_pc": 0,
+    "state_all_limit": 1,
+    "state_limit_pc": 0,
+    "focus": 0,
+    "in_tray": 1,
+    "show_notification": 1,
+    "auto_start": 1,
+    "keep_session": 1,
+    "keep_archive": 31
   }
 }

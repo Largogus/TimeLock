@@ -268,6 +268,7 @@ class Statistics(QWidget):
         self.main.mainLayout.addStretch()
 
         layout.addWidget(self.main)
+        layout.addSpacing(-20)
 
         self.setLayout(layout)
 

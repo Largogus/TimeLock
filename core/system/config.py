@@ -2,6 +2,7 @@ from json import load
 from pathlib import Path
 from loguru import logger
 
+from core.signals.core_events import core_events
 
 CONFIG_PATH = Path("storage/config.json")
 ICON_PATH = Path("src/icon.png")
@@ -51,6 +52,19 @@ def validate_path(path: Path):
     return True
 
 
+def get_settings():
+    from core.system.load_settings import load_settings
+
+    return load_settings(DEFAULT_SETTINGS)
+
+
+def refresh_settings():
+    global SETTINGS
+    new_settings = get_settings()
+    SETTINGS.clear()
+    SETTINGS.update(new_settings)
+
+
 _config = load_config()
 
 DATABASE_PATH = _config['database_url']
@@ -61,7 +75,13 @@ FRIENDLY_PROCESS = _config['friendly_process']
 
 FONT_FAMILY = _config["ui"]["font_family"]
 
+DEFAULT_SETTINGS = _config["default_settings"]
+
 ICON_PATH = str(ICON_PATH)
+
+SETTINGS = get_settings()
+
+core_events.settings_edited.connect(refresh_settings)
 
 
 __all__ = (
@@ -69,5 +89,6 @@ __all__ = (
     "SYSTEM_PROCESS",
     'FRIENDLY_PROCESS',
     "FONT_FAMILY",
-    "ICON_PATH"
+    "ICON_PATH",
+    "SETTINGS"
 )

@@ -1,7 +1,7 @@
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QLineEdit, QFrame, QMenu
 from PySide6.QtCore import QSize, QRectF
-from PySide6.QtGui import QColor, QPainter, QBrush, Qt, QFont, QAction, QPen
+from PySide6.QtGui import QColor, QPainter, QBrush, Qt, QFont, QAction, QPen, QPalette
 
 
 class TextEdit(QLineEdit):
@@ -89,7 +89,19 @@ class TextEdit(QLineEdit):
         return QSize(300, 60)
 
     def contextMenuEvent(self, event):
+
         menu = QMenu(self)
+
+        menu.setStyleSheet("""
+        QMenu {
+            background-color: gray;
+            color: white;
+        }
+
+        QMenu::item:selected {
+            background-color: darkgray;
+        }
+        """)
 
         actions = [
             ("Отменить", self.undo),

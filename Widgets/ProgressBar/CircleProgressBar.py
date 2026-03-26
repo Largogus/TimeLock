@@ -13,6 +13,7 @@ class CircleProgressBar(QWidget):
         self.setMaximumSize(250, 250)
 
         self.time = ""
+        print(limit)
 
     def upd(self, post_progress):
         if self.progress == post_progress:
@@ -23,11 +24,12 @@ class CircleProgressBar(QWidget):
 
     def setLimit(self, new_limit):
         self.limit = new_limit
+        print(self.limit)
         self.update()
 
     def progressColor(self) -> QColor:
         if self.limit == 0:
-            return QColor("#909fb6")
+            return QColor("#71d926")
 
         percent = (self.progress / self.limit)
 
@@ -104,8 +106,12 @@ class CircleProgressBar(QWidget):
             font.setPointSize(int(self.height() / 24))
             painter.setFont(font)
 
-            h = to_time(self.limit)
-            t_h = plural(h, ("час", "часа", "часов"))
+            if self.limit < 60 * 60:
+                h = to_time(self.limit, "m")
+                t_h = plural(h, ("минута", "минуты", "минут"))
+            else:
+                h = to_time(self.limit)
+                t_h = plural(h, ("час", "часа", "часов"))
 
             painter.setPen(QColor('#555555'))
 

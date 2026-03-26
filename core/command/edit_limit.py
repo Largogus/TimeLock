@@ -44,7 +44,7 @@ def delete_limit_app(db_session, app):
             return False
 
         else:
-            app_obj.limit.daily_limit = None
+            app_obj.limit.daily_limit = 0
             app_obj.limit.enabled = True
 
         db_session.commit()
@@ -73,7 +73,7 @@ def turn_app_limit(db_session, app):
             return False
 
         else:
-            state, _ = get_category_limit(db_session, app)
+            state, _ = get_app_limit(db_session, app)
             app_obj.limit.enabled = not bool(state)
 
         db_session.commit()
@@ -81,7 +81,7 @@ def turn_app_limit(db_session, app):
 
     except Exception:
         db_session.rollback()
-        logger.critical("Ошибка при изменении лимита")
+        logger.exception("Ошибка при изменении лимита")
         return False
 
 

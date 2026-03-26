@@ -1,12 +1,12 @@
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from PySide6.QtCore import QThread
-from sqlalchemy import func, delete
+from sqlalchemy import func, delete, case
 from sqlalchemy.exc import SQLAlchemyError
-from core.command.settings import get_settings
 from core.db.session_logic import close_session
 from core.db.session import SessionLocal
 from core.models.AppSession import AppSession
 from core.signals.edit_signals import signal_edit
+from core.system.config import SETTINGS
 from core.thread.main.tracker_tick import tracker_tick
 from core.signals.tracker_signals import signal
 from core.system.get_total_pc_time_today import get_total_pc_time_today
@@ -38,16 +38,19 @@ class TrackerThread(QThread):
             if record:
                 record.total_seconds = data['total_seconds']
                 record.sessions_count = data['sessions_count']
+                record.focus_seconds = data["focus_seconds"]
             else:
                 new_record = DailyStat(
                     date=today,
                     app_id=app_id,
                     total_seconds=data['total_seconds'],
-                    sessions_count=data['sessions_count']
+                    sessions_count=data['sessions_count'],
+                    focus_seconds=data['focus_seconds']
                 )
                 db_session.add(new_record)
 
         db_session.commit()
+        logger.debug("Обновился архив")
 
     def load_initial_cache(self, db_session):
         today_start = datetime.combine(date.today(), time.min)
@@ -60,7 +63,15 @@ class TrackerThread(QThread):
                     func.strftime('%s', func.min(func.coalesce(AppSession.end_time, now), now)) -
                     func.strftime('%s', func.max(AppSession.start_time, today_start))
                 ).label("total_seconds"),
-                func.count(AppSession.id).label("sessions_count")
+                func.count(AppSession.id).label("sessions_count"),
+                func.sum(
+                    case(
+                        (AppSession.focus_mode == 1,
+                          func.strftime('%s', func.min(func.coalesce(AppSession.end_time, now), now)) -
+                          func.strftime('%s', func.max(AppSession.start_time, today_start))),
+                        else_=0
+                    )
+                ).label("focus_seconds")
             )
             .filter(
                 AppSession.start_time < now,
@@ -74,45 +85,75 @@ class TrackerThread(QThread):
             db_session.query(
                 App,
                 func.coalesce(total_time_subquery.c.total_seconds, 0),
-                func.coalesce(total_time_subquery.c.sessions_count, 0)
+                func.coalesce(total_time_subquery.c.sessions_count, 0),
+                func.coalesce(total_time_subquery.c.focus_seconds, 0),
             )
             .outerjoin(total_time_subquery, App.id == total_time_subquery.c.app_id)
             .filter(App.status == "tracking")
         )
 
-        for app, total_seconds, sessions_count in query:
+        for app, total_seconds, sessions_count, focus_seconds in query:
             self.daily_cache[app.id] = {
                 "total_seconds": total_seconds,
-                "sessions_count": sessions_count
+                "sessions_count": sessions_count,
+                "focus_seconds": focus_seconds,
             }
 
     def remove_session(self, db_session):
-        today_start = datetime.combine(date.today(), time.min)
+        now = datetime.now()
+        period = SETTINGS.get("keep_session", 1)
+
+        if period == 1:
+            threshold = datetime.combine(date.today(), time.min)
+        else:
+            threshold = now - timedelta(days=period)
 
         try:
-            session = (
+            stmt = (
                 delete(AppSession)
-                .where(AppSession.start_time < today_start)
+                .where(AppSession.start_time < threshold)
             )
-            result = db_session.execute(session)
+
+            result = db_session.execute(stmt)
             db_session.commit()
 
             deleted_count = result.rowcount
-            logger.success(f"Успешно удалено {deleted_count} сессий")
+            logger.success(f"Успешно удалено {deleted_count} сессий за период {period} дней")
         except SQLAlchemyError as e:
             db_session.rollback()
             logger.error(f"Не удалось очистить AppSession: {e}")
 
+    def remove_archive(self, db_session):
+        now = datetime.now()
+        period = SETTINGS.get("keep_archive", 31)
+
+        if period == 1:
+            threshold = date.today()
+        else:
+            threshold = (now - timedelta(days=period)).date()
+
+        try:
+            stmt = (
+                delete(DailyStat)
+                .where(DailyStat.date < threshold)
+            )
+            result = db_session.execute(stmt)
+            db_session.commit()
+
+            deleted_count = result.rowcount
+            logger.success(f"Успешно удалено {deleted_count} архивных записей за период {period} дней")
+
+        except SQLAlchemyError as e:
+            db_session.rollback()
+            logger.error(f"Не удалось очистить архив: {e}")
+
     def run(self):
         db_session = self.db_session_factory()
         try:
-            self._interval = get_settings(
-                db_session,
-                "tracking_interval_seconds",
-                cast_type=int
-            ) or 1
+            self._interval = SETTINGS.get("tracking_interval_seconds", 1)
 
             self.remove_session(db_session)
+            self.remove_archive(db_session)
             self.load_initial_cache(db_session)
 
             while not self.isInterruptionRequested():
@@ -122,6 +163,7 @@ class TrackerThread(QThread):
                         signal_edit.upd_limit.emit()
                         self.update_daily_time(db_session)
                         self.remove_session(db_session)
+                        self.remove_archive(db_session)
                         self._current_date = today
                         self.load_initial_cache(db_session)
 
@@ -140,14 +182,24 @@ class TrackerThread(QThread):
                             app_id = app.id
 
                             if app_id not in self.daily_cache:
-                                self.daily_cache[app_id] = {"total_seconds": 0, "sessions_count": 0}
+                                self.daily_cache[app_id] = {
+                                    "total_seconds": 0,
+                                    "sessions_count": 0,
+                                    "focus_seconds": 0,
+                                }
+
+                            state_focus = SETTINGS.get("focus", 0)
 
                             if self._current_app_id != app_id:
                                 if self._current_app_id is not None:
                                     self.daily_cache[self._current_app_id]['sessions_count'] += 1
+
                                 self._current_app_id = app_id
 
-                            self.daily_cache[app_id]['total_seconds'] += self._interval
+                            if not state_focus:
+                                self.daily_cache[app_id]['total_seconds'] += self._interval
+                            else:
+                                self.daily_cache[app_id]['focus_seconds'] += self._interval
 
                         now = datetime.now()
                         if (now - self._last_commit).total_seconds() >= 60:

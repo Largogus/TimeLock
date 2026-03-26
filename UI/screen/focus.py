@@ -1,4 +1,4 @@
-from PySide6.QtCore import QTimer, QTime, QDateTime
+from PySide6.QtCore import QTime, QDateTime
 from PySide6.QtGui import QColor, QPalette, Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTimeEdit
 from Widgets.Buttons.Button import Button
@@ -6,9 +6,11 @@ from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
 from Widgets.Modal.FocusAllowedModal import FocusAllowedModal
 from Widgets.ProgressBar.FocusProgressBar import FocusProgressBar
+from Widgets.Timer import Timer
 from Widgets.Wrapper import Wrapper
-from core.command.settings import get_settings, set_settings
+from core.command.settings import set_settings
 from core.db.session import SessionLocal
+from core.system.config import SETTINGS
 from core.system.date import time_for_qt, parse_time
 
 
@@ -97,23 +99,22 @@ class Focus(QWidget):
         self.main.mainLayout.addStretch()
 
         layout.addWidget(self.main)
+        layout.addSpacing(-20)
         self.setLayout(layout)
 
-        self.time = QTimer()
+        self.time = Timer()
+        self.time.stopped.connect(self.reload)
+        self.time.timeout.connect(self.updTime)
 
     def startTimerThread(self):
-        focus_state = get_settings(self.db_session, "focus", int)
+        focus_state = SETTINGS.get("focus", 0)
+
+        if self.timer.time() == QTime(0, 0) and not focus_state:
+            self.focus_progress_bar.updateRemainingTime(100000)
+            return
 
         if focus_state:
-            self.focus_start.setText("Включить фокус")
-            self.focus_start.setBackgroundColor(QColor("#66f092"))
-            self.focus_start.setBackgroundHover(QColor("#4dfe85"))
-            self.focus_start.setBackgroundPressed(QColor("#67fe97"))
-
-            self.timer.setEnabled(True)
             self.time.stop()
-
-            self.focus_progress_bar.updateRemainingTime(100000)
         else:
             self.focus_start.setText("Выключить фокус")
             self.focus_start.setBackgroundColor(QColor("#ef706b"))
@@ -122,7 +123,7 @@ class Focus(QWidget):
 
             self.timer.setEnabled(False)
 
-        # Работа самого фокуса, и тд.
+            # Работа самого фокуса, и тд.
 
             time = self.timer.time()
 
@@ -132,7 +133,6 @@ class Focus(QWidget):
 
             self.focus_progress_bar.setTotalTime(self.total_seconds)
 
-            self.time.timeout.connect(self.updTime)
             self.time.start(1000)
 
         set_settings(self.db_session, 'focus', not focus_state, int)
@@ -141,8 +141,18 @@ class Focus(QWidget):
         remaining = QDateTime.currentDateTime().secsTo(self.end_time)
 
         if remaining <= 0:
+            set_settings(self.db_session, 'focus', 0, int)
             self.time.stop()
-            remaining = 0
+        else:
+            self.focus_progress_bar.updateRemainingTime(remaining)
+            self.timer.setTime(time_for_qt(remaining))
 
-        self.focus_progress_bar.updateRemainingTime(remaining)
-        self.timer.setTime(time_for_qt(remaining))
+    def reload(self):
+        self.focus_start.setText("Включить фокус")
+        self.focus_start.setBackgroundColor(QColor("#66f092"))
+        self.focus_start.setBackgroundHover(QColor("#4dfe85"))
+        self.focus_start.setBackgroundPressed(QColor("#67fe97"))
+
+        self.timer.setEnabled(True)
+        self.focus_progress_bar.updateRemainingTime(100000)
+

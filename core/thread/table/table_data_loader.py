@@ -1,5 +1,5 @@
 from PySide6.QtCore import QThread, Signal
-from core.command.settings import get_settings
+from core.system.config import SETTINGS
 from core.thread.table.get_time_application import get_time_application
 from loguru import logger
 
@@ -16,11 +16,7 @@ class TableDataLoader(QThread):
         db_session = self.db_session_factory()
 
         try:
-            interval = get_settings(
-                db_session,
-                "tracking_interval_seconds",
-                cast_type=int
-            ) or 1
+            interval = SETTINGS.get("tracking_interval_seconds", 1)
 
             while not self.isInterruptionRequested():
                 try:

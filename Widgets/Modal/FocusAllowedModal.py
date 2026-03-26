@@ -6,7 +6,7 @@ from Style.PopupStyle import PopupStyle
 from Widgets.Buttons.Button import Button
 from Widgets.Line import Line
 from Widgets.ComboBoxes.PopUp import PopUp
-from Widgets.TextEdit import TextEdit
+from Widgets.TextsEdits.TextEdit import TextEdit
 from core.command.category_command import get_category
 from core.command.focus_command import is_focus_allowed, set_focus_allowed
 from core.command.get_all_app import get_all_app, get_all_app_with_category

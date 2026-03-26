@@ -6,8 +6,11 @@ from Widgets.Line import Line
 from Widgets.Modal.CategoryModal import CategoryModal
 from Widgets.Panels.PanelTemplate import PanelTemplate
 from Widgets.Wrapper import Wrapper
+from core.command.block_app import add_block_app, is_blocked, remove_block_app
 from core.db.session import SessionLocal
 from core.signals.change_signals import signal_change
+from core.signals.notification_signals import show_notification
+from core.statistic.clear_app_in_stat import clear_app_in_stat
 from core.system.date import normal_time
 
 
@@ -24,6 +27,7 @@ class AppPanel(PanelTemplate):
 
         self.app = ""
         self.app_id = None
+        self.block = False
 
         self.name_app = QLabel()
         wrapper = Wrapper(self.name_app)
@@ -98,6 +102,8 @@ class AppPanel(PanelTemplate):
         self.not_visible.setBackgroundPressed(QColor('#6B7280'))
 
         self.not_visible.clicked.connect(lambda: self.on_delete(self.app, self.app_id))
+        self.delete_stat.clicked.connect(lambda: self.on_remove_stats(self.app))
+        self.block_button.clicked.connect(lambda: self.on_blocked(self.app))
 
         self.delete_stat.setBackgroundColor(QColor('#6B7280'))
         self.delete_stat.setBackgroundHover(QColor('#6B7280'))
@@ -132,6 +138,10 @@ class AppPanel(PanelTemplate):
         self.statistic_for_seven_day.setText(f'Среднее за неделю: {normal_time((name.get("middle_time", "Unknown")), "short")}')
         self.app_id = name.get("id")
 
+        self.block = is_blocked(self.app, SessionLocal(), app_is_name=True)
+        self.block_button.setText(
+            "Разблокировать" if self.block else "Заблокировать")
+
         limit = (name.get("limit", "Unknown"))
         self.limit_title.setText(f'Лимит: {limit if limit != "Нет" else "не установлен"}')
 
@@ -152,10 +162,49 @@ class AppPanel(PanelTemplate):
         from Widgets.Modal.MessageTemplate import MessageTemplate
         modal = MessageTemplate(
             msg_icon=QMessageBox.Icon.Question,
-            text=f"Вы уверены, что хотите перестать отслеживать {data}",
+            text=f"Вы уверены, что хотите перестать отслеживать {data}?",
             title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
 
         if modal:
             db_session = SessionLocal()
             dont_tracking(db_session, id)
+            show_notification.show_notification_app_not_tracking.emit(data)
+
+    def on_remove_stats(self, data):
+        from Widgets.Modal.MessageTemplate import MessageTemplate
+        modal = MessageTemplate(
+            msg_icon=QMessageBox.Icon.Question,
+            text=f"Вы уверены, что хотите удалить всю статистику {data}?",
+            title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if modal:
+            db_session = SessionLocal()
+            state, message = clear_app_in_stat(db_session, data)
+
+            MessageTemplate(
+                msg_icon=QMessageBox.Icon.Information if state else QMessageBox.Icon.Warning,
+                text=message,
+                title="Оповещение"
+            )
+
+    def on_blocked(self, data):
+        from Widgets.Modal.MessageTemplate import MessageTemplate
+        modal = MessageTemplate(
+            msg_icon=QMessageBox.Icon.Question,
+            text=f"Вы уверены, что хотите {'заблокировать' if not self.block else 'разблокировать'} {data}?",
+            title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if modal:
+            db_session = SessionLocal()
+
+            if not self.block:
+                add_block_app(data, db_session)
+                self.block_button.setText("Разблокировать")
+                self.block = True
+            else:
+                remove_block_app(data, db_session)
+                self.block_button.setText("Заблокировать")
+                self.block = False

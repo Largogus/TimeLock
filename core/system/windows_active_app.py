@@ -1,3 +1,5 @@
+from typing import Tuple, Optional
+
 import win32api
 from win32gui import GetWindowText, IsWindowVisible, GetClassName, GetForegroundWindow
 from win32process import GetWindowThreadProcessId
@@ -7,16 +9,16 @@ from ctypes import windll, create_string_buffer, c_void_p, c_uint, byref, c_usho
 from loguru import logger
 
 
-def get_active_window_app() -> tuple[str, str] | tuple[None, None]:
+def get_active_window_app() -> Tuple[Optional[str], Optional[str], Optional[Process], Optional[int]]:
     try:
         hwnd = GetForegroundWindow()
 
         if not hwnd or not IsWindowVisible(hwnd):
-            return None, None
+            return None, None, None, None
 
         class_name = GetClassName(hwnd)
         if class_name in ("Progman", "WorkerW"):
-            return None, None
+            return None, None, None, None
 
         _, pid = GetWindowThreadProcessId(hwnd)
         proc = Process(pid)
@@ -24,21 +26,21 @@ def get_active_window_app() -> tuple[str, str] | tuple[None, None]:
         name_lower = proc.name().lower()
 
         if name_lower in SYSTEM_PROCESS:
-            return None, None
+            return None, None, None, None
 
         exe_path = proc.exe()
 
         if name_lower == "applicationframehost.exe":
             title = GetWindowText(hwnd)
-            return title, exe_path
+            return title, exe_path, proc, hwnd
 
         if name_lower in ("java.exe", "javaw.exe"):
             title = GetWindowText(hwnd)
 
-            return title, exe_path
+            return title, exe_path, proc, hwnd
 
         if proc.name() in FRIENDLY_PROCESS:
-            return FRIENDLY_PROCESS[proc.name()], exe_path
+            return FRIENDLY_PROCESS[proc.name()], exe_path, proc, hwnd
 
         app_name = _get_file_name(exe_path)
         if not app_name:
@@ -48,9 +50,9 @@ def get_active_window_app() -> tuple[str, str] | tuple[None, None]:
             else:
                 app_name = proc.name().rsplit(".", 1)[0]
 
-        return app_name, exe_path
+        return app_name, exe_path, proc, hwnd
     except Exception:
-        return None, None
+        return None, None, None, None
 
 
 def _get_file_name(path: str) -> str | None:     # Вспомнить работу функции

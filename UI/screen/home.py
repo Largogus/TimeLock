@@ -1,11 +1,12 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem
+from PySide6.QtWidgets import QLabel, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QSpacerItem, QMessageBox
 from PySide6.QtGui import QColor, QPalette
 from Widgets.Buttons.Button import Button
+from Widgets.Buttons.IndicatorButton import IndicatorButton
 from Widgets.Cards.CategoryCard import CategoryCard
 from Widgets.Panels.SidePanel import SidePanel
 from Widgets.Wrapper import Wrapper
-from core.command.settings import get_settings
+from core.command.settings import set_settings
 from core.db.session import SessionLocalCash, SessionLocal
 from core.signals.edit_signals import signal_edit
 from core.system.date import today, normal_time
@@ -13,7 +14,7 @@ from Widgets.Frame import BaseFrame
 from Widgets.ProgressBar.CircleProgressBar import CircleProgressBar
 from core.signals.tracker_signals import signal
 from core.thread.category.top_category import TopCategory
-from core.system.config import FONT_FAMILY
+from core.system.config import FONT_FAMILY, SETTINGS
 
 
 class Home(QWidget):
@@ -45,7 +46,12 @@ class Home(QWidget):
         self.date_label.setPalette(QPalette(QColor(255, 255, 255)))
         self.date_label.setText(f"Сегодня, {today()}")
 
-        self.pause_limits = Button("Пауза лимитов", indicator=True, radius=6, alpha=[100, 120, 100], margin=4, ratio=64)
+        self.state_all_limit = SETTINGS.get("state_all_limit", 1)
+
+        self.pause_limits = IndicatorButton("Пауза лимитов", radius=6, alpha=[100, 120, 100],
+                                            margin=4, ratio=64, align=Qt.AlignmentFlag.AlignCenter,
+                                            state=bool(self.state_all_limit))
+        self.pause_limits.clicked.connect(self.change_all_state_limit)
 
         self.header.addElement(self.date_label)
         self.header.mainLayout.addStretch(1)
@@ -56,9 +62,13 @@ class Home(QWidget):
         spacer = QSpacerItem(0, 20, QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Expanding)
         self.date_frame.addSpacer(spacer)
 
-        common_limit = get_settings(self.db_session, "total_limit_pc", int)
+        common_limit = SETTINGS.get("total_limit_pc", 1)
+        common_limit_state = SETTINGS.get("state_limit_pc", 1)
 
-        self.progress_bar = CircleProgressBar(common_limit)
+        self.progress_bar = CircleProgressBar(0)
+
+        if common_limit_state:
+            self.progress_bar.setLimit(common_limit)
 
         if common_limit != 0:
             common_limit_str = f'Лимит: {normal_time(common_limit)}'
@@ -144,6 +154,11 @@ class Home(QWidget):
                 self.h.addWidget(category_card)
 
     def update_limit(self, limit):
+        state = SETTINGS.get("state_limit_pc", 1)
+
+        if state == 0:
+            limit = 0
+
         self.progress_bar.setLimit(limit)
 
         if limit != 0:
@@ -152,3 +167,20 @@ class Home(QWidget):
             common_limit_str = "Лимит не установлен"
 
         self.limit_label.setText(common_limit_str)
+
+    def change_all_state_limit(self):
+        from Widgets.Modal.MessageTemplate import MessageTemplate
+
+        self.state_all_limit = SETTINGS.get("state_all_limit", 1)
+
+        if self.state_all_limit:
+            modal = MessageTemplate(QMessageBox.Icon.Question,
+                                    "Все лимиты будут отключены, пока вы не включите их обратно",
+                                    title="Оповещение", standard_btn=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+            if modal:
+                set_settings(self.db_session, "state_all_limit", 0, int)
+                self.pause_limits.mousePressButton()
+        else:
+            set_settings(self.db_session, "state_all_limit", 1, int)
+            self.pause_limits.mousePressButton()
