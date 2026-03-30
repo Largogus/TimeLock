@@ -22,6 +22,8 @@ from core.signals.table_signals import signal
 from core.signals.change_signals import signal_change
 from loguru import logger
 
+from core.widgets.thread_manager import thread_manager
+
 
 class Applications(QWidget):
     def __init__(self):
@@ -99,7 +101,7 @@ class Applications(QWidget):
         self.filter_search.close.connect(self.filter_allow)
         button_header.append(self.filter_search)
 
-        self.table_loader = TableDataLoader(SessionLocal)
+        self.table_loader = thread_manager.register(TableDataLoader(SessionLocal))
 
         self.table = QTableView()
         self.table.setSelectionMode(QTableView.SelectionMode.NoSelection)
@@ -141,6 +143,11 @@ class Applications(QWidget):
         self.table.setBackgroundRole(QPalette.ColorRole.Base)
 
         self.table.setMinimumWidth(1000)
+
+        # Более современный вид заголовка
+        header_t = self.table.horizontalHeader()
+        header_t.setHighlightSections(False)
+        header_t.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignCenter)
 
         self.table_loader.statsReady.connect(lambda data: self.model.update_data(data))
 

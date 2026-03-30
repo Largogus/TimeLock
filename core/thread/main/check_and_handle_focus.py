@@ -1,10 +1,8 @@
-from datetime import datetime, date, time
-from sqlalchemy import or_
 from core.models.App import App
-from core.models.AppLimit import AppLimit
 from core.models.FocusAllowed import FocusAllowed
 from core.signals.ui_events import ui_events
 from core.system.config import SETTINGS
+from core.system.windows_active_app import is_safe_window
 
 
 def check_and_handle_focus(app, hwnd, db_session):
@@ -12,6 +10,9 @@ def check_and_handle_focus(app, hwnd, db_session):
 
     if not bool(state_focus):
         return False
+
+    if not is_safe_window(hwnd):
+        return True
 
     focus = (
         db_session.query(FocusAllowed)

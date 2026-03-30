@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QGraphicsDropShadowE
 
 from Style.PopupStyle import PopupStyle
 from Widgets.Buttons.Button import Button
+from Widgets.Completer import Completer
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
 from Widgets.ComboBoxes.PopUp import PopUp
@@ -17,6 +18,7 @@ from core.command.is_exists_in_bd import is_exists_in_bd
 from core.command.settings import set_settings
 from core.db.session import SessionLocal
 from core.signals.change_signals import signal_change
+from core.signals.core_events import core_events
 from core.signals.edit_signals import signal_edit
 from core.signals.notification_signals import show_notification
 from core.system.config import SETTINGS
@@ -261,22 +263,17 @@ class Limit(QWidget):
         self.app_limit_text_edit.setMaximumWidth(336)
         apps_completer = get_all_app(self.db_session)
 
-        completer = QCompleter(apps_completer)
-        completer.setWidget(self.app_limit_text_edit)
-        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
-
+        completer = Completer(self.app_limit_text_edit, apps_completer)
         popup = completer.popup()
         popup.setAutoFillBackground(False)
         popup.setItemDelegate(PopupStyle(bg=QColor("#e0e0e0"), hbg=QColor(166, 217, 166, 255), clc_bg=QColor("#b4e9b4"), text_color=QColor("black")))
+        popup.setLineWidth(0)
+
+        core_events.app_added.connect(lambda name: update_completer(name, completer, apps_completer))
 
         self.search_timer = QTimer()
         self.search_timer.setSingleShot(True)
         self.search_timer.timeout.connect(self.do_search)
-
-        popup.setLineWidth(0)
-
-        self.app_limit_text_edit.setCompleter(completer)
 
         self.app_limit_today = QLabel()
         self.app_limit_today.setText(f"Сегодня: —")
@@ -338,7 +335,6 @@ class Limit(QWidget):
         app_limit_block_hbox.addStretch()
 
         app_limit_block.addLayout(app_limit_block_hbox)
-        print(self.category_limit_limit.time())
 
         """--------------------------------------------------------"""
 
@@ -376,7 +372,6 @@ class Limit(QWidget):
 
         category_limit, is_limit = get_category_limit(self.db_session, category)
 
-        print(is_limit)
         if is_limit != 0 and is_limit is not None:
             self.turn_category_limit.setText("Включить лимит" if category_limit == 0 else "Отключить лимит")
             self.turn_category_limit.setDisabled(False)
@@ -457,6 +452,10 @@ class Limit(QWidget):
             self.removeLimitApp()
             return
 
+        if seconds < 5 * 60:
+            show_notification.show_notification_error_limit.emit("приложений", 5)
+            return
+
         edit = edit_limit_app(self.db_session, app_name, seconds)
 
         if edit:
@@ -474,6 +473,10 @@ class Limit(QWidget):
 
         if seconds == 0:
             self.removeLimitCategory()
+            return
+
+        if seconds < 10 * 60:
+            show_notification.show_notification_error_limit.emit("категорий", 10)
             return
 
         edit = edit_limit_category(self.db_session, app_name, seconds)
@@ -521,7 +524,7 @@ class Limit(QWidget):
             return
 
         if seconds < 30 * 60:
-            show_notification.show_notification_error_limit.emit()
+            show_notification.show_notification_error_limit.emit("ПК", 30)
             return
 
         edit = set_settings(self.db_session, "total_limit_pc", seconds, int)
@@ -572,7 +575,6 @@ class Limit(QWidget):
 
     def updateTextCommonLimit(self):
         common_limit_time = SETTINGS.get("total_limit_pc", 0)
-        common_limit = SETTINGS.get("state_limit_pc", 0)
 
         if common_limit_time == 0:
             self.turn_btn.setDisabled(True)
@@ -590,3 +592,7 @@ class Limit(QWidget):
         self.common_limit_text_db.setText(f"Сегодня: {today_time_str} из {common_limit_str}" if common_limit_time != 0 else "Без лимита")
         self.picker.setTime(time_for_qt(common_limit_time))
 
+
+def update_completer(name, completer, app_list):
+    app_list.append(name)
+    completer.update_items(app_list)

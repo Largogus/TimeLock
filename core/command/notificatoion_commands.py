@@ -3,11 +3,15 @@ from loguru import logger
 from win32gui import ShowWindow, SetForegroundWindow, GetForegroundWindow, GetWindow, IsWindow, IsWindowVisible, IsIconic, GetWindowText
 from win32con import SW_MINIMIZE, KEYEVENTF_KEYUP, GW_HWNDNEXT, VK_MENU
 from win32api import keybd_event
+from core.system.windows_active_app import is_safe_window
 
 
 def on_focus_rollup():
     try:
         target = GetForegroundWindow()
+
+        if not is_safe_window(target):
+            return
 
         next_hwnd = _get_next_valid_window(target)
 
@@ -29,6 +33,9 @@ def _get_next_valid_window(hwnd):
     next_hwnd = GetWindow(hwnd, GW_HWNDNEXT)
 
     while next_hwnd:
+        if not is_safe_window(hwnd):
+            continue
+
         if _is_valid_window(next_hwnd):
             return next_hwnd
         next_hwnd = GetWindow(next_hwnd, GW_HWNDNEXT)

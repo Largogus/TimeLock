@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from Widgets.Modal.CloseModal.BlockedUser import BlockedUser
 from Widgets.Modal.CloseModal.LimitClose import LimitModal
 from Widgets.Modal.CloseModal.PClose import PCModal
 from Widgets.Overlay import Overlay
 from core.command.modal import on_modal_closed, on_modal_rollup, on_pc_closed, on_pc_disabled, on_modal_unblock
-from core.signals.notification_signals import show_notification
+from core.signals.core_events import core_events
 from core.signals.ui_events import ui_events
 from core.system.clean_exit import clean_exit
 from pathlib import Path
@@ -12,7 +12,10 @@ from UI import main_window
 from sys import argv, exit
 from loguru import logger
 from core.signals.tracker_signals import signal
+from core.system.connect_notifications import connect_notifications
+from core.system.register import register_command
 from core.widgets.notification_manager import NotificationManager
+from core.widgets.thread_manager import thread_manager
 
 LOG_DIR = Path("logs")
 LOG_DIR.mkdir(exist_ok=True)
@@ -47,74 +50,50 @@ def main():
 
     app = QApplication(argv)
 
+    styles = QStyleFactory.keys()
+
+    if "windows11" in styles:
+        app.setStyle("windows11")
+    else:
+        app.setStyle("windowsvista")
+        logger.debug("Стиль windows11 не найден")
+
     font = app.font()
     font.setFamily(FONT_FAMILY)
     app.setFont(font)
 
     window = main_window.MainWindow()
-    window.show()
 
-    tracker = TrackerThread(SessionLocal)
+    if not SETTINGS.get("in_tray", 0):
+        window.show()
+
+    register_command()
+
+    core_events.register_signal.connect(register_command)
+
+    tracker = thread_manager.register(TrackerThread(SessionLocal))
+
     app_thread = SessionLocal()
 
-    # tracker.sessionUpdate.connect(lambda app_name: print(get_total_pc_time_today(SessionLocal())))
     signal.errorOccurred.connect(lambda error: logger.error(error))
     ui_events.show_limit_modal.connect(show_limit)
     ui_events.show_limit_pc.connect(lambda: show_limit_pc(app_thread))
     ui_events.show_blocked_user_modal.connect(lambda name, hwnd: show_block(name, hwnd))
 
-    if SETTINGS.get("show_notification", 1):
-        manager = NotificationManager(parent=window)
-
-        ui_events.show_focus_notification.connect(
-            lambda name, hwnd: manager.show(
-                "У вас запущен фокус, %app% свёрнут",
-                name,
-                hwnd
-            )
-        )
-
-        show_notification.show_notification_unblocked.connect(
-            lambda name: manager.show(
-                "%app% разблокирован",
-                name
-            )
-        )
-
-        show_notification.show_notification_blocked.connect(
-            lambda name: manager.show(
-                "%app% заблокирован",
-                name
-            )
-        )
-
-        show_notification.show_notification_app_not_tracking.connect(
-            lambda name: manager.show(
-                "%app% больше не отслеживатеся, снова отслеживать можете в Настройки",
-                name
-            )
-        )
-
-        show_notification.show_notification_app_tracking.connect(
-            lambda name: manager.show(
-                "%app% снова отслеживатеся",
-                name
-            )
-        )
-
-        show_notification.show_notification_error_limit.connect(
-            lambda: manager.show(
-                "Лимит для ПК не может быть меньше 30 минут"
-            )
-        )
+    manager = NotificationManager()
+    connect_notifications(manager)
+    core_events.show_visible.connect(lambda: connect_notifications(manager))
 
     tracker.start()
 
     logger.success("Приложение запустилось")
 
-    app.aboutToQuit.connect(lambda: clean_exit(tracker, _overlay, _modal))
+    app.aboutToQuit.connect(lambda: clean_exit(_overlay, _modal))
 
-    exit(app.exec())
+    try:
+        exit(app.exec())
+    finally:
+        thread_manager.stop_all()
 
 
 def show_limit(name, hwnd):
@@ -175,7 +154,7 @@ def show_limit_pc(db_session):
     if "pc" in _block_until:
         _block_until["pc"] += 1
 
-        if _block_until["pc"] < 30: # потом заменить на 5*60
+        if _block_until["pc"] < 5*60:
             return
         else:
             del _block_until["pc"]
@@ -218,5 +197,9 @@ if __name__ == '__main__':
     try:
         main()
     except Exception:
+        from Widgets.Modal.MessageTemplate import MessageTemplate
+
+        thread_manager.stop_all()
+
+        MessageTemplate(QMessageBox.Icon.Critical, "Критическая ошибка при запуске приложения", "TimeLock", )
         logger.exception("Критическая ошибка при запуске приложения")
-        raise # Только тесты!!

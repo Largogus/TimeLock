@@ -1,5 +1,6 @@
 from core.command.block_app import is_blocked
 from core.db.session_logic import handle_session
+from core.signals.core_events import core_events
 from core.signals.ui_events import ui_events
 from core.system.windows_active_app import get_active_window_app
 from core.models.App import App
@@ -21,6 +22,8 @@ def tracker_tick(db_session: SessionLocal):
 
     active_app_name, active_app_path, proc, hwnd = get_active_window_app()
 
+    if active_app_name == "__IGNORE__": return
+
     if not active_app_name: return
 
     app = _apps_by_name.get(active_app_name)
@@ -40,6 +43,8 @@ def tracker_tick(db_session: SessionLocal):
             app = App(name=active_app_name, path=active_app_path)
             db_session.add(app)
             db_session.commit()
+
+            core_events.app_added.emit(active_app_name)
 
         _apps_by_name[app.name] = app
         _apps_by_path[app.path] = app

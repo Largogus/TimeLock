@@ -3,6 +3,7 @@ from PySide6.QtGui import QPalette, QColor, QPainter, QBrush, QPen
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication, QHBoxLayout
 from Widgets.Buttons.Button import Button
 
+
 class Notification(QWidget):
     closed = Signal()
 
@@ -24,10 +25,13 @@ class Notification(QWidget):
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.Window, QColor(50, 50, 50))
         palette.setColor(QPalette.ColorRole.Text, QColor("white"))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor("white"))
         self.setPalette(palette)
 
         layout = QVBoxLayout(self)
         self.label = QLabel()
+
+        self.label.setPalette(palette)
 
         L_F = self.label.font()
         L_F.setBold(True)

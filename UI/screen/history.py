@@ -13,6 +13,7 @@ from core.statistic.history_stats import get_history_session
 from core.system.config import FONT_FAMILY
 from core.system.date import normal_time
 from core.thread.stat.get_stat_info import StatisticThread
+from core.widgets.thread_manager import thread_manager
 
 
 class History(QWidget):
@@ -21,7 +22,7 @@ class History(QWidget):
 
         self.db_session = SessionLocal()
 
-        self.thread_stat = StatisticThread(SessionLocal)
+        self.thread_stat = thread_manager.register(StatisticThread(SessionLocal))
         self.thread_stat.start()
 
         layout = QVBoxLayout()
@@ -258,3 +259,7 @@ class History(QWidget):
                 layout.removeItem(l)
             elif s is not None:
                 layout.removeItem(s)
+
+    def update_completer(self, name, completer, app_list):
+        app_list.append(name)
+        completer.update_items(app_list)

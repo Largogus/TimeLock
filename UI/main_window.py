@@ -1,5 +1,6 @@
-from PySide6.QtGui import QColor, QIcon, QPixmap
-from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, QSpacerItem
+from PySide6.QtGui import QColor, QIcon, QPixmap, QAction
+from PySide6.QtWidgets import QMainWindow, QStackedWidget, QWidget, QHBoxLayout, QVBoxLayout, QSizePolicy, QLabel, \
+    QSpacerItem, QSystemTrayIcon, QMenu, QApplication
 from PySide6.QtCore import QPropertyAnimation, QEasingCurve, Qt
 from UI.screen.applications import Applications
 from UI.screen.focus import Focus
@@ -13,7 +14,7 @@ from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
 from UI.screen.home import Home
-from core.system.config import ICON_PATH
+from core.system.config import ICON_PATH, SETTINGS
 from core.signals.change_signals import signal_change
 
 
@@ -26,8 +27,23 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('TimeLock')
         self.setWindowIcon(QIcon(ICON_PATH))
 
-        # self.signal = SignalObject()
-        # self.signal.change_window.connect(self.change_window)
+        self.tray = QSystemTrayIcon(QIcon(ICON_PATH), self)
+
+        menu = QMenu()
+
+        show_action = QAction("Открыть", self)
+        quit_action = QAction("Выход", self)
+
+        show_action.triggered.connect(self.show)
+        quit_action.triggered.connect(QApplication.quit)
+
+        menu.addAction(show_action)
+        menu.addAction(quit_action)
+
+        self.tray.activated.connect(self.on_tray_click)
+
+        self.tray.setContextMenu(menu)
+        self.tray.show()
 
         x, y = DesktopSize(self)
 
@@ -163,6 +179,11 @@ class MainWindow(QMainWindow):
             else:
                 self.logo.hide()
 
+    def on_tray_click(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.show()
+            self.activateWindow()
+
     def change_window(self, data: str):
         if data == "Обзор":
             self.stacked.setCurrentIndex(0)
@@ -195,6 +216,10 @@ class MainWindow(QMainWindow):
 
             if self.window_small:
                 self.logo.show()
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
 
     def change_current_window(self, inx, data, types=None):
         self.stacked.setCurrentIndex(inx)

@@ -9,6 +9,7 @@ from Widgets.Modal.CategoryManager import CategoryManager
 from Widgets.Modal.ExceptionManager import ExceptionManager
 from core.command.settings import set_settings
 from core.db.session import SessionLocal
+from core.signals.core_events import core_events
 from core.system.config import SETTINGS
 from core.system.delete_all_info import delete_all_info
 from core.system.export_stat import export_statistics
@@ -72,22 +73,28 @@ class Settings(QWidget):
         self.title_common_block.setPalette(self.label_palette)
 
         self.check_start_app_with_run = QCheckBox()
-        self.check_start_app_with_run.setCheckState(Qt.CheckState.Checked)
+        self.check_start_app_with_run.setCheckState(Qt.CheckState.Checked if SETTINGS.get("auto_start")
+                                                   else Qt.CheckState.Unchecked)
         self.check_start_app_with_run.setText("Запускать приложение при старте системы")
         self.check_start_app_with_run.setPalette(self.label_palette)
         self.check_start_app_with_run.setFont(self.mini_label_font)
+        self.check_start_app_with_run.stateChanged.connect(self.change_auto_start)
 
         self.check_start_app_in_tray = QCheckBox()
-        self.check_start_app_in_tray.setCheckState(Qt.CheckState.Checked)
+        self.check_start_app_in_tray.setCheckState(Qt.CheckState.Checked if SETTINGS.get("in_tray")
+                                                   else Qt.CheckState.Unchecked)
         self.check_start_app_in_tray.setText("Запускать свернутым в трей")
         self.check_start_app_in_tray.setPalette(self.label_palette)
         self.check_start_app_in_tray.setFont(self.mini_label_font)
+        self.check_start_app_in_tray.stateChanged.connect(self.change_in_tray)
 
         self.check_show_notification = QCheckBox()
-        self.check_show_notification.setCheckState(Qt.CheckState.Checked)
+        self.check_show_notification.setCheckState(Qt.CheckState.Checked if SETTINGS.get("show_notification")
+                                                   else Qt.CheckState.Unchecked)
         self.check_show_notification.setText("Показывать уведомления")
         self.check_show_notification.setPalette(self.label_palette)
         self.check_show_notification.setFont(self.mini_label_font)
+        self.check_show_notification.stateChanged.connect(self.change_show_notification)
 
         self.common_block.addElement(self.title_common_block)
         self.common_block.addElement(self.check_start_app_with_run)
@@ -286,3 +293,37 @@ class Settings(QWidget):
             )
 
             restart_app()
+
+    def change_in_tray(self):
+        state = SETTINGS.get("in_tray", 1)
+
+        if state:
+            self.check_start_app_in_tray.setChecked(False)
+            set_settings(self.db_session, "in_tray", 0, int)
+        else:
+            self.check_start_app_in_tray.setChecked(True)
+            set_settings(self.db_session, "in_tray", 1, int)
+
+    def change_show_notification(self):
+        state = SETTINGS.get("show_notification", 1)
+
+        if state:
+            self.check_show_notification.setChecked(False)
+            set_settings(self.db_session, "show_notification", 0, int)
+        else:
+            self.check_show_notification.setChecked(True)
+            set_settings(self.db_session, "show_notification", 1, int)
+
+        core_events.show_visible.emit()
+
+    def change_auto_start(self):
+        state = SETTINGS.get("auto_start", 1)
+
+        if state:
+            self.check_start_app_with_run.setChecked(False)
+            set_settings(self.db_session, "auto_start", 0, int)
+        else:
+            self.check_start_app_with_run.setChecked(True)
+            set_settings(self.db_session, "auto_start", 1, int)
+
+        core_events.register_signal.emit()

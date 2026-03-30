@@ -25,7 +25,6 @@ class CategoryManager(QWidget):
         self.setWindowTitle("Менеджер управления категориями")
         self.setWindowIcon(QIcon(ICON_PATH))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
-        self.setWindowFlags(self.windowFlags() | Qt.WindowType.MSWindowsFixedSizeDialogHint)
 
         palette = self.palette()
         palette.setColor(QPalette.ColorRole.Window, QColor("#f0f0f0"))

@@ -12,7 +12,6 @@ from core.signals.statistics_signsl import stats_signal
 from core.statistic.get_all_stat import get_all_stats
 from core.statistic.get_bar_chart_data import get_category_info, get_app_info, get_display_value_and_unit
 from core.system.date import normal_time
-from core.thread.stat.get_stat_info import StatisticThread
 
 
 class Statistics(QWidget):

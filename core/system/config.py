@@ -39,6 +39,8 @@ def validate_config(config):
         raise TypeError("'ui' должен быть словарём")
     if not isinstance(config["system_process"], list):
         raise TypeError("'system_process' должен быть списком")
+    if not isinstance(config["system_classes"], list):
+        raise TypeError("'system_classes' должен быть списком")
     if not isinstance(config["friendly_process"], dict):
         raise TypeError("'friendly_process' должен быть словарём")
 
@@ -71,7 +73,11 @@ DATABASE_PATH = _config['database_url']
 
 SYSTEM_PROCESS = _config['system_process']
 
+SYSTEM_CLASSES = _config['system_classes']
+
 FRIENDLY_PROCESS = _config['friendly_process']
+
+FRIENDLY_UWP = _config['friendly_uwp']
 
 FONT_FAMILY = _config["ui"]["font_family"]
 
@@ -87,7 +93,9 @@ core_events.settings_edited.connect(refresh_settings)
 __all__ = (
     "DATABASE_PATH",
     "SYSTEM_PROCESS",
+    "SYSTEM_CLASSES",
     'FRIENDLY_PROCESS',
+    "FRIENDLY_UWP",
     "FONT_FAMILY",
     "ICON_PATH",
     "SETTINGS"

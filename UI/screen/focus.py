@@ -10,6 +10,7 @@ from Widgets.Timer import Timer
 from Widgets.Wrapper import Wrapper
 from core.command.settings import set_settings
 from core.db.session import SessionLocal
+from core.signals.notification_signals import show_notification
 from core.system.config import SETTINGS
 from core.system.date import time_for_qt, parse_time
 
@@ -116,14 +117,13 @@ class Focus(QWidget):
         if focus_state:
             self.time.stop()
         else:
+            show_notification.show_notification_focus_on.emit()
             self.focus_start.setText("Выключить фокус")
             self.focus_start.setBackgroundColor(QColor("#ef706b"))
             self.focus_start.setBackgroundHover(QColor("#f0918e"))
             self.focus_start.setBackgroundPressed(QColor("#f16a65"))
 
             self.timer.setEnabled(False)
-
-            # Работа самого фокуса, и тд.
 
             time = self.timer.time()
 
@@ -142,6 +142,7 @@ class Focus(QWidget):
 
         if remaining <= 0:
             set_settings(self.db_session, 'focus', 0, int)
+            show_notification.show_notification_focus_off.emit()
             self.time.stop()
         else:
             self.focus_progress_bar.updateRemainingTime(remaining)

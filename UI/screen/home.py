@@ -15,6 +15,7 @@ from Widgets.ProgressBar.CircleProgressBar import CircleProgressBar
 from core.signals.tracker_signals import signal
 from core.thread.category.top_category import TopCategory
 from core.system.config import FONT_FAMILY, SETTINGS
+from core.widgets.thread_manager import thread_manager
 
 
 class Home(QWidget):
@@ -107,7 +108,7 @@ class Home(QWidget):
         self.date_frame.addLayout(wrapper_category_label)
         self.date_frame.addSpacer(spacer)
 
-        self.top_worker = TopCategory(self.db_session_cash, interval=10)
+        self.top_worker = thread_manager.register(TopCategory(self.db_session_cash, interval=10))
         self.top_worker.topUpdated.connect(self.update_top_categories)
         self.top_worker.start()
 
