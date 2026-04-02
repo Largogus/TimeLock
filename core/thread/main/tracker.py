@@ -56,7 +56,15 @@ class TrackerThread(QThread):
             start = max(session_obj.start_time, today_start)
             end = session_obj.end_time or now
             total_seconds = int((end - start).total_seconds())
+
+            if total_seconds < 0:
+                total_seconds = 0
+
             focus_seconds = total_seconds if session_obj.focus_mode else 0
+
+            if focus_seconds < 0:
+                focus_seconds = 0
+
             app_id = session_obj.app_id
             if app_id not in self.daily_cache:
                 self.daily_cache[app_id] = {"total_seconds": 0, "sessions_count": 0, "focus_seconds": 0}
@@ -134,11 +142,11 @@ class TrackerThread(QThread):
                         signal_edit.upd_limit.emit()
                         self._current_date = today
                         self.daily_cache = {}
+                        self.load_initial_cache(db_session)
                         db_writer.submit(lambda session: self.update_daily_time(self.daily_cache.copy()))
                         db_writer.submit(self.remove_session)
                         db_writer.submit(self.remove_archive)
                         db_writer.submit(self.fix_unclosed_sessions)
-                        self.load_initial_cache(db_session)
 
                     app, hwnd, active_app_name, active_app_path = tracker_tick(db_session)
 

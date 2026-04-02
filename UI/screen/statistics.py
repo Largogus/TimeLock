@@ -358,7 +358,6 @@ class Statistics(QWidget):
             self.category_stats_axis_x.setCategories([])
             return
 
-        categories = [""]
         max_minutes = 0
 
         self.category_stats_axis_x.setCategories([""])
@@ -383,5 +382,4 @@ class Statistics(QWidget):
         else:
             self.category_axis_y.setRange(0, 1)
 
-        # self.chart.setAnimationOptions(QChart.AnimationOption.SeriesAnimations)
         self.category_stats_chart.update()

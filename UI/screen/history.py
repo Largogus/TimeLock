@@ -201,6 +201,7 @@ class History(QWidget):
             self.lay.addLayout(Wrapper(self.history_card))
 
         if len(apps_completer) == 0:
+            self.setDetails("")
             self.label = QLabel()
             self.label.setText("Мы пока не нашли вашу историю")
             self.label.setPalette(self.palette_label)

@@ -15,7 +15,8 @@ def addData(category_name: str) -> tuple[str, int, dict]:
         data = session.query(AppSession).join(App).filter(
             App.category == category_name,
             AppSession.start_time <= now,
-            func.coalesce(AppSession.end_time, now) >= start_of_day
+            func.coalesce(AppSession.end_time, now) >= start_of_day,
+            App.status == "tracking"
         )
 
         total_time = 0

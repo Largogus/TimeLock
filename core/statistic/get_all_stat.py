@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+
+from core.models.App import App
 from core.models.DailyStat import DailyStat
 
 
@@ -21,7 +23,9 @@ def get_all_stats(session: Session, period: str, target_date: datetime.date = No
                 func.sum(DailyStat.focus_seconds).label("focus_seconds"),
                 func.sum(DailyStat.sessions_count).label("session")
             )
-            .filter(DailyStat.date == target_date)
+            .join(App)
+            .filter(DailyStat.date == target_date,
+                    App.status == "tracking")
             .all()
         )
 
@@ -35,7 +39,9 @@ def get_all_stats(session: Session, period: str, target_date: datetime.date = No
                 func.sum(DailyStat.focus_seconds).label("focus_seconds"),
                 func.sum(DailyStat.sessions_count).label("session")
             )
-            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week)
+            .join(App)
+            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week,
+                    App.status == "tracking")
             .all()
         )
 
@@ -49,7 +55,9 @@ def get_all_stats(session: Session, period: str, target_date: datetime.date = No
                 func.sum(DailyStat.focus_seconds).label("focus_seconds"),
                 func.sum(DailyStat.sessions_count).label("session")
             )
-            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week)
+            .join(App)
+            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week,
+                    App.status == "tracking")
             .all()
         )
 

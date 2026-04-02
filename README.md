@@ -12,6 +12,18 @@
 
 ---
 
+## Скриншоты
+
+<p align="center">
+  <img src="assets/home_1.png" width="700"><br><br>
+  <img src="assets/application.png" width="700"><br><br>
+  <img src="assets/settings.png" width="700">
+</p>
+
+###  **Больше скриншотов в папке assets**
+
+---
+
 ## **Возможности**
 
 * Отслеживание времени за компьютером
@@ -44,3 +56,5 @@
 ## **Лицензия**
 
 * CC BY-NC-SA 4.0
+
+---

@@ -19,7 +19,8 @@ def get_category_info(session: Session, period: str, target_date: datetime.date 
                 func.sum(DailyStat.total_seconds).label("unfocus_seconds")
             )
             .join(App)
-            .filter(DailyStat.date == target_date)
+            .filter(DailyStat.date == target_date,
+                    App.status == "tracking")
             .group_by(App.category)
             .all()
         )
@@ -34,7 +35,8 @@ def get_category_info(session: Session, period: str, target_date: datetime.date 
                 func.sum(DailyStat.total_seconds).label("unfocus_seconds")
             )
             .join(App)
-            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week)
+            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week,
+                    App.status == "tracking")
             .group_by(App.category)
             .all()
         )
@@ -49,7 +51,8 @@ def get_category_info(session: Session, period: str, target_date: datetime.date 
                 func.sum(DailyStat.total_seconds).label("unfocus_seconds")
             )
             .join(App)
-            .filter(DailyStat.date >= start_month, DailyStat.date <= end_month)
+            .filter(DailyStat.date >= start_month, DailyStat.date <= end_month,
+                    App.status == "tracking")
             .group_by(App.category)
             .all()
         )
@@ -80,7 +83,8 @@ def get_app_info(session: Session, period: str, target_date: datetime.date = Non
                 func.sum(DailyStat.total_seconds).label("unfocus_seconds")
             )
             .join(App)
-            .filter(DailyStat.date == target_date)
+            .filter(DailyStat.date == target_date,
+                    App.status == "tracking")
             .group_by(App.name)
             .all()
         )
@@ -94,7 +98,8 @@ def get_app_info(session: Session, period: str, target_date: datetime.date = Non
                 func.sum(DailyStat.total_seconds).label("unfocus_seconds")
             )
             .join(App)
-            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week)
+            .filter(DailyStat.date >= start_week, DailyStat.date <= end_week,
+                    App.status == "tracking")
             .group_by(App.name)
             .all()
         )
@@ -109,7 +114,8 @@ def get_app_info(session: Session, period: str, target_date: datetime.date = Non
                 func.sum(DailyStat.total_seconds).label("unfocus_seconds")
             )
             .join(App)
-            .filter(DailyStat.date >= start_month, DailyStat.date <= end_month)
+            .filter(DailyStat.date >= start_month, DailyStat.date <= end_month,
+                    App.status == "tracking")
             .group_by(App.name)
             .all()
         )
