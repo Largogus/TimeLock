@@ -1,0 +1,64 @@
+{
+  "first_start": false,
+  "database_url": "sqlite:///",
+  "system_process": [
+    "svchost.exe",
+    "runtimebroker.exe",
+    "dllhost.exe",
+    "conhost.exe",
+    "taskhostw.exe",
+    "systemsettings.exe",
+    "textinputhost.exe",
+    "windowsterminalhost.exe",
+    "windowsterminal.exe",
+    "searchhost.exe",
+    "werfault.exe",
+    "dwm.exe",
+    "startmenuexperiencehost.exe",
+    "shellexperiencehost.exe",
+    "openwith.exe",
+    "lockapp.exe",
+    "shellhost.exe",
+    "explorer.exe",
+    "searchapp.exe",
+    "timelock.exe",
+    "credentialuibroker.exe",
+    "applicationframehost.exe",
+    "python.exe"
+  ],
+  "system_classes": [
+    "Progman",
+    "WorkerW",
+    "Shell_TrayWnd",
+    "Shell_SecondaryTrayWnd",
+    "NotifyIconOverflowWindow"
+  ],
+  "system_paths": [
+    "C:\\Windows\\System32",
+    "C:\\Windows\\SysWOW64",
+    "C:\\Windows\\SystemApps"
+  ],
+  "friendly_process": {
+    "Notepad.exe": "Блокнот",
+    "mspaint.exe": "Paint",
+    "max.exe": "MAX",
+    "whatsapp.root.exe": "WhatsApp",
+    "sqlitestudio.exe": "SQLiteStudio"
+  },
+  "ui": {
+    "font_family": "Segoe UI",
+    "font_size": 12
+  },
+  "default_settings": {
+    "tracking_interval_seconds": 1,
+    "total_limit_pc": 0,
+    "state_all_limit": 1,
+    "state_limit_pc": 0,
+    "focus": 0,
+    "in_tray": 1,
+    "show_notification": 1,
+    "auto_start": 1,
+    "keep_session": 1,
+    "keep_archive": 31
+  }
+}
