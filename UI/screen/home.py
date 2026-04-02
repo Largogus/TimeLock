@@ -67,6 +67,7 @@ class Home(QWidget):
         common_limit_state = SETTINGS.get("state_limit_pc", 1)
 
         self.progress_bar = CircleProgressBar(0)
+        self.progress_bar.time = "0 минут"
 
         if common_limit_state:
             self.progress_bar.setLimit(common_limit)
@@ -108,7 +109,7 @@ class Home(QWidget):
         self.date_frame.addLayout(wrapper_category_label)
         self.date_frame.addSpacer(spacer)
 
-        self.top_worker = thread_manager.register(TopCategory(self.db_session_cash, interval=10))
+        self.top_worker = thread_manager.register(TopCategory(self.db_session_cash, interval=1))
         self.top_worker.topUpdated.connect(self.update_top_categories)
         self.top_worker.start()
 

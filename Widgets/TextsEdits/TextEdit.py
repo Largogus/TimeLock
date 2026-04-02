@@ -1,7 +1,7 @@
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import QLineEdit, QFrame, QMenu
+from PySide6.QtWidgets import QLineEdit, QMenu
 from PySide6.QtCore import QSize, QRectF
-from PySide6.QtGui import QColor, QPainter, QBrush, Qt, QFont, QAction, QPen, QPalette
+from PySide6.QtGui import QColor, QPainter, QBrush, Qt, QAction, QPen
 
 
 class TextEdit(QLineEdit):

@@ -10,7 +10,6 @@ class NotificationManager:
         self.is_showing = False
 
     def show(self, text, name=None, hwnd=None):
-        logger.debug(self.queue)
         if self.queue and self.queue[-1][1] == name:
             return
 

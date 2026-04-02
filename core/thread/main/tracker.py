@@ -1,10 +1,13 @@
 from datetime import date, datetime, time, timedelta
 from PySide6.QtCore import QThread
-from sqlalchemy import func, delete, case
+from sqlalchemy import delete
 from sqlalchemy.exc import SQLAlchemyError
-from core.db.session_logic import close_session
+
+from core.db.db_writer import db_writer
 from core.db.session import SessionLocal
+from core.db.session_logic import handle_session
 from core.models.AppSession import AppSession
+from core.signals.core_events import core_events
 from core.signals.edit_signals import signal_edit
 from core.system.config import SETTINGS
 from core.thread.main.tracker_tick import tracker_tick
@@ -18,196 +21,164 @@ from loguru import logger
 class TrackerThread(QThread):
     def __init__(self, db_session_factory):
         super().__init__()
-
         self._current_app_id = None
         self._current_date = date.today()
+        self._last_heartbeat = datetime.now()
         self._last_commit = datetime.now()
-        self._daily_seconds = 0
         self._interval = 1
-
         self.daily_cache = {}
-
         self.db_session_factory = db_session_factory
 
-    def update_daily_time(self, db_session):
-        today = date.today()
-
-        for app_id, data in self.daily_cache.items():
-            record = db_session.query(DailyStat).filter_by(date=today, app_id=app_id).first()
-
-            if record:
-                record.total_seconds = data['total_seconds']
-                record.sessions_count = data['sessions_count']
-                record.focus_seconds = data["focus_seconds"]
-            else:
-                new_record = DailyStat(
-                    date=today,
-                    app_id=app_id,
-                    total_seconds=data['total_seconds'],
-                    sessions_count=data['sessions_count'],
-                    focus_seconds=data['focus_seconds']
-                )
-                db_session.add(new_record)
-
-        db_session.commit()
-        logger.debug("Обновился архив")
+    def update_daily_time(self, daily_cache):
+        with SessionLocal() as session:
+            today = date.today()
+            for app_id, data in daily_cache.items():
+                record = session.query(DailyStat).filter_by(date=today, app_id=app_id).first()
+                if record:
+                    record.total_seconds = data['total_seconds']
+                    record.sessions_count = data['sessions_count']
+                    record.focus_seconds = data['focus_seconds']
+                else:
+                    session.add(DailyStat(
+                        date=today,
+                        app_id=app_id,
+                        total_seconds=data['total_seconds'],
+                        sessions_count=data['sessions_count'],
+                        focus_seconds=data['focus_seconds']
+                    ))
+            session.commit()
 
     def load_initial_cache(self, db_session):
         today_start = datetime.combine(date.today(), time.min)
         now = datetime.now()
+        sessions = db_session.query(AppSession).all()
+        for session_obj in sessions:
+            start = max(session_obj.start_time, today_start)
+            end = session_obj.end_time or now
+            total_seconds = int((end - start).total_seconds())
+            focus_seconds = total_seconds if session_obj.focus_mode else 0
+            app_id = session_obj.app_id
+            if app_id not in self.daily_cache:
+                self.daily_cache[app_id] = {"total_seconds": 0, "sessions_count": 0, "focus_seconds": 0}
+            self.daily_cache[app_id]['total_seconds'] += total_seconds
+            self.daily_cache[app_id]['sessions_count'] += 1
+            self.daily_cache[app_id]['focus_seconds'] += focus_seconds
 
-        total_time_subquery = (
-            db_session.query(
-                AppSession.app_id.label("app_id"),
-                func.sum(
-                    func.strftime('%s', func.min(func.coalesce(AppSession.end_time, now), now)) -
-                    func.strftime('%s', func.max(AppSession.start_time, today_start))
-                ).label("total_seconds"),
-                func.count(AppSession.id).label("sessions_count"),
-                func.sum(
-                    case(
-                        (AppSession.focus_mode == 1,
-                          func.strftime('%s', func.min(func.coalesce(AppSession.end_time, now), now)) -
-                          func.strftime('%s', func.max(AppSession.start_time, today_start))),
-                        else_=0
-                    )
-                ).label("focus_seconds")
-            )
-            .filter(
-                AppSession.start_time < now,
-                func.coalesce(AppSession.end_time, now) > today_start
-            )
-            .group_by(AppSession.app_id)
-            .subquery()
-        )
-
-        query = (
-            db_session.query(
-                App,
-                func.coalesce(total_time_subquery.c.total_seconds, 0),
-                func.coalesce(total_time_subquery.c.sessions_count, 0),
-                func.coalesce(total_time_subquery.c.focus_seconds, 0),
-            )
-            .outerjoin(total_time_subquery, App.id == total_time_subquery.c.app_id)
-            .filter(App.status == "tracking")
-        )
-
-        for app, total_seconds, sessions_count, focus_seconds in query:
-            self.daily_cache[app.id] = {
-                "total_seconds": total_seconds,
-                "sessions_count": sessions_count,
-                "focus_seconds": focus_seconds,
-            }
-
-    def remove_session(self, db_session):
-        now = datetime.now()
+    @staticmethod
+    def remove_session(*args, **kwargs):
         period = SETTINGS.get("keep_session", 1)
+        threshold = datetime.combine(date.today(), time.min) if period == 1 else datetime.now() - timedelta(days=period)
+        with SessionLocal() as session:
+            try:
+                result = session.execute(
+                    AppSession.__table__.delete().where(AppSession.start_time < threshold)
+                )
+                session.commit()
+                logger.success(f"Удалено {result.rowcount} старых сессий за {period} дней")
+            except Exception as e:
+                session.rollback()
+                logger.error(f"Ошибка при удалении старых сессий: {e}")
 
-        if period == 1:
-            threshold = datetime.combine(date.today(), time.min)
-        else:
-            threshold = now - timedelta(days=period)
 
-        try:
-            stmt = (
-                delete(AppSession)
-                .where(AppSession.start_time < threshold)
-            )
-
-            result = db_session.execute(stmt)
-            db_session.commit()
-
-            deleted_count = result.rowcount
-            logger.success(f"Успешно удалено {deleted_count} сессий за период {period} дней")
-        except SQLAlchemyError as e:
-            db_session.rollback()
-            logger.error(f"Не удалось очистить AppSession: {e}")
-
-    def remove_archive(self, db_session):
-        now = datetime.now()
+    @staticmethod
+    def remove_archive(*args, **kwargs):
         period = SETTINGS.get("keep_archive", 31)
+        threshold = date.today() if period == 1 else (datetime.now() - timedelta(days=period)).date()
+        with SessionLocal() as session:
+            try:
+                result = session.execute(
+                    DailyStat.__table__.delete().where(DailyStat.date < threshold)
+                )
+                session.commit()
+                logger.success(f"Удалено {result.rowcount} старых архивных записей за {period} дней")
+            except Exception as e:
+                session.rollback()
+                logger.error(f"Ошибка при удалении архивных записей: {e}")
 
-        if period == 1:
-            threshold = date.today()
-        else:
-            threshold = (now - timedelta(days=period)).date()
-
-        try:
-            stmt = (
-                delete(DailyStat)
-                .where(DailyStat.date < threshold)
-            )
-            result = db_session.execute(stmt)
-            db_session.commit()
-
-            deleted_count = result.rowcount
-            logger.success(f"Успешно удалено {deleted_count} архивных записей за период {period} дней")
-
-        except SQLAlchemyError as e:
-            db_session.rollback()
-            logger.error(f"Не удалось очистить архив: {e}")
+    @staticmethod
+    def fix_unclosed_sessions(*args, **kwargs):
+        now = datetime.now()
+        with SessionLocal() as session:
+            open_sessions = session.query(AppSession).filter(AppSession.end_time.is_(None)).all()
+            for s in open_sessions:
+                last_active = s.start_time or now
+                delta = (now - last_active).total_seconds()
+                if delta > 60:
+                    s.end_time = last_active
+                    logger.info(f"Закрыта сессия до сна ({(last_active - s.start_time).total_seconds():.0f} сек)")
+                else:
+                    s.end_time = now
+            session.commit()
 
     def run(self):
         db_session = self.db_session_factory()
         try:
-            self._interval = SETTINGS.get("tracking_interval_seconds", 1)
-
-            self.remove_session(db_session)
-            self.remove_archive(db_session)
             self.load_initial_cache(db_session)
+
+            db_writer.submit(self.remove_session)
+
+            db_writer.submit(self.remove_archive)
+
+            db_writer.submit(self.fix_unclosed_sessions)
+
+            db_writer.submit(lambda session: self.update_daily_time(self.daily_cache.copy()))
+
+            signal.sessionUpdate.emit(get_total_pc_time_today())
 
             while not self.isInterruptionRequested():
                 try:
                     today = date.today()
+                    now = datetime.now()
+
                     if today != self._current_date:
                         signal_edit.upd_limit.emit()
-                        self.update_daily_time(db_session)
-                        self.remove_session(db_session)
-                        self.remove_archive(db_session)
                         self._current_date = today
+                        self.daily_cache = {}
+                        db_writer.submit(lambda session: self.update_daily_time(self.daily_cache.copy()))
+                        db_writer.submit(self.remove_session)
+                        db_writer.submit(self.remove_archive)
+                        db_writer.submit(self.fix_unclosed_sessions)
                         self.load_initial_cache(db_session)
 
-                    res = tracker_tick(db_session)
+                    app, hwnd, active_app_name, active_app_path = tracker_tick(db_session)
 
-                    if res is not None:
-                        active_app_name, active_app_path = res
+                    real_delta = (now - self._last_heartbeat).total_seconds()
+                    if real_delta > 45:
+                        db_writer.submit(self.fix_unclosed_sessions)
+                        self._current_app_id = None
+
+                    if app:
+                        app_id = app.id
+                        if app_id not in self.daily_cache:
+                            self.daily_cache[app_id] = {"total_seconds": 0, "sessions_count": 0, "focus_seconds": 0}
+
+                        if self._current_app_id != app_id:
+                            if self._current_app_id is not None:
+                                self.daily_cache[self._current_app_id]['sessions_count'] += 1
+                            self._current_app_id = app_id
+
+                        db_writer.submit(
+                            lambda session: handle_session(app, db_session=session, focus=SETTINGS.get("focus", 0)))
+
+                        if not SETTINGS.get("focus", 0):
+                            self.daily_cache[app_id]['total_seconds'] += self._interval
+                        else:
+                            self.daily_cache[app_id]['focus_seconds'] += self._interval
+
+                        self._last_heartbeat = now
                     else:
-                        active_app_name, active_app_path = None, None
+                        if self._current_app_id is not None:
+                            db_writer.submit(lambda session: handle_session(App(id="close"), db_session=session,
+                                                                            focus=SETTINGS.get("focus", 0)))
 
-                    if active_app_name:
-                        app = db_session.query(App).filter_by(name=active_app_name).first()
-                        if app is None:
-                            app = db_session.query(App).filter_by(path=active_app_path).first()
-                        if app:
-                            app_id = app.id
+                        self._current_app_id = None
+                        self._last_heartbeat = now
 
-                            if app_id not in self.daily_cache:
-                                self.daily_cache[app_id] = {
-                                    "total_seconds": 0,
-                                    "sessions_count": 0,
-                                    "focus_seconds": 0,
-                                }
+                    if (now - self._last_commit).total_seconds() >= 60:
+                        db_writer.submit(lambda session: self.update_daily_time(self.daily_cache.copy()))
+                        self._last_commit = now
 
-                            state_focus = SETTINGS.get("focus", 0)
-
-                            if self._current_app_id != app_id:
-                                if self._current_app_id is not None:
-                                    self.daily_cache[self._current_app_id]['sessions_count'] += 1
-
-                                self._current_app_id = app_id
-
-                            if not state_focus:
-                                self.daily_cache[app_id]['total_seconds'] += self._interval
-                            else:
-                                self.daily_cache[app_id]['focus_seconds'] += self._interval
-
-                        now = datetime.now()
-                        if (now - self._last_commit).total_seconds() >= 60:
-                            self.update_daily_time(db_session)
-                            self._last_commit = now
-
-                        res_time = get_total_pc_time_today(db_session)
-                        signal.sessionUpdate.emit(res_time)
+                    signal.sessionUpdate.emit(get_total_pc_time_today())
 
                 except Exception as e:
                     signal.errorOccurred.emit(str(e))
@@ -220,17 +191,9 @@ class TrackerThread(QThread):
                     QThread.sleep(1)
 
         finally:
-            self.update_daily_time(db_session)
+            db_writer.submit(self.update_daily_time, self.daily_cache.copy())
             db_session.close()
 
     def stop(self):
         self.requestInterruption()
-
-        db_session = self.db_session_factory()
-        try:
-            close_session(db_session)
-        finally:
-            db_session.close()
-
-        close_session(SessionLocal())
         self.wait()

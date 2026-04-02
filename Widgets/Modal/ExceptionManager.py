@@ -8,7 +8,7 @@ from Widgets.Buttons.Button import Button
 from Widgets.Line import Line
 from core.command.get_all_app import get_ignored_app, get_all_app
 from core.system.desktop import DesktopSize
-from core.system.config import FONT_FAMILY, ICON_PATH
+from core.system.config import FONT_FAMILY
 from core.db.session import SessionLocal
 from core.widgets.manager_exception import delete_exception, add_exception
 
@@ -26,7 +26,7 @@ class ExceptionManager(QWidget):
 
         self.setFont(font)
         self.setWindowTitle("Менеджер управления исключениями")
-        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setWindowIcon(QIcon(":src/image.png"))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         palette = self.palette()

@@ -38,8 +38,6 @@ def add_to_auto_run():
     SetValueEx(key, "TimeLock", 0, REG_SZ, exe)
     CloseKey(key)
 
-    logger.debug("Приложение добавленно в автозагрузку")
-
 
 def remove_to_auto_run():
     if not is_autorun("TimeLock"):
@@ -54,8 +52,6 @@ def remove_to_auto_run():
 
     DeleteValue(key, "TimeLock")
     CloseKey(key)
-
-    logger.debug(f"TimeLock удалён из автозагрузки")
 
 
 def register_command():

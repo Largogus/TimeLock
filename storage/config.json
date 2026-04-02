@@ -1,6 +1,6 @@
 {
   "first_start": false,
-  "database_url": "sqlite:///storage/tracker.db",
+  "database_url": "sqlite:///",
   "system_process": [
     "svchost.exe",
     "runtimebroker.exe",
@@ -20,7 +20,11 @@
     "lockapp.exe",
     "shellhost.exe",
     "explorer.exe",
-    "screenclippinghost.exe"
+    "searchapp.exe",
+    "timelock.exe",
+    "credentialuibroker.exe",
+    "applicationframehost.exe",
+    "python.exe"
   ],
   "system_classes": [
     "Progman",
@@ -29,19 +33,17 @@
     "Shell_SecondaryTrayWnd",
     "NotifyIconOverflowWindow"
   ],
+  "system_paths": [
+    "C:\\Windows\\System32",
+    "C:\\Windows\\SysWOW64",
+    "C:\\Windows\\SystemApps"
+  ],
   "friendly_process": {
     "Notepad.exe": "Блокнот",
     "mspaint.exe": "Paint",
     "max.exe": "MAX",
     "whatsapp.root.exe": "WhatsApp",
     "sqlitestudio.exe": "SQLiteStudio"
-  },
-  "friendly_uwp": {
-    "Microsoft.WindowsSettings": "Параметры",
-    "Microsoft.MicrosoftEdge": "Edge",
-    "Microsoft.WindowsStore": "Магазин",
-    "Microsoft.Messaging": "Сообщения",
-    "Microsoft.ZuneMusic": "Музыка"
   },
   "ui": {
     "font_family": "Segoe UI",

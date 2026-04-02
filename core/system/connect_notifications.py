@@ -19,8 +19,6 @@ def connect_notifications(manager):
 
         return
 
-    print(SETTINGS.get('show_notification', 1))
-
     for signal, slot in _connected_slots.items():
         try:
             signal.disconnect(slot)

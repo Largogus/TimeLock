@@ -13,7 +13,6 @@ class CircleProgressBar(QWidget):
         self.setMaximumSize(250, 250)
 
         self.time = ""
-        print(limit)
 
     def upd(self, post_progress):
         if self.progress == post_progress:
@@ -24,7 +23,6 @@ class CircleProgressBar(QWidget):
 
     def setLimit(self, new_limit):
         self.limit = new_limit
-        print(self.limit)
         self.update()
 
     def progressColor(self) -> QColor:

@@ -6,8 +6,9 @@ from Widgets.Buttons.Button import Button
 from Widgets.Line import Line
 from Widgets.Buttons.ToolButton import ToolButton
 from core.command.category_command import get_category
+from core.signals.core_events import core_events
 from core.system.desktop import DesktopSize
-from core.system.config import FONT_FAMILY, ICON_PATH
+from core.system.config import FONT_FAMILY
 from core.db.session import SessionLocal
 from core.widgets.manager_category import delete_category, add_category, change_category
 
@@ -23,7 +24,7 @@ class CategoryManager(QWidget):
 
         self.setFont(font)
         self.setWindowTitle("Менеджер управления категориями")
-        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setWindowIcon(QIcon(":src/icon.png"))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         palette = self.palette()
@@ -89,7 +90,7 @@ class CategoryManager(QWidget):
             labl.setReadOnly(True)
             labl.setPalette(self.palette_edit)
 
-            action = QAction(QIcon("src/icon/more_vert.svg"), "", labl)
+            action = QAction(QIcon(":src/icon/more_vert.svg"), "", labl)
             labl.addAction(action, QLineEdit.ActionPosition.TrailingPosition)
 
             self.lay_widget.addWidget(labl)
@@ -105,6 +106,7 @@ class CategoryManager(QWidget):
                         msg_icon=QMessageBox.Icon.Information if success else QMessageBox.Icon.Warning)
 
         self.clear_layout(self.lay_widget)
+        core_events.remove_category.emit(category)
         self.setData()
 
     def rename_category(self, widget: LineEdit):
@@ -113,7 +115,7 @@ class CategoryManager(QWidget):
         widget.setFocus()
 
         save_btn = ToolButton(
-            icon_path="src/icon/done.svg",
+            icon_path=":src/icon/done.svg",
             icon_size=16,
             bg_color=QColor(217, 217, 217),
             hover_color=QColor(100, 255, 100, 100),
@@ -122,7 +124,7 @@ class CategoryManager(QWidget):
         save_btn.show()
 
         cancel_btn = ToolButton(
-            icon_path="src/icon/close.svg",
+            icon_path=":src/icon/close.svg",
             icon_size=16,
             bg_color=QColor(217, 217, 217),
             hover_color=QColor(255, 100, 100, 100),
@@ -149,6 +151,7 @@ class CategoryManager(QWidget):
 
             self.clear_layout(self.lay_widget)
             self.setData()
+            core_events.rename_category.emit(text, last_text)
 
         def cancel():
             widget.setReadOnly(True)
@@ -185,6 +188,7 @@ class CategoryManager(QWidget):
 
         self.clear_layout(self.lay_widget)
         self.setData()
+        core_events.add_category.emit(self.add_category_name.text())
 
     def open_menu(self, widget, category):
         menu = QMenu(self)

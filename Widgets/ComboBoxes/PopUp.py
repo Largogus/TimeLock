@@ -92,7 +92,7 @@ class PopUp(QComboBox):
         self.setPlaceholderText(placeholder)
         self.currentIndexChanged.connect(self._on_click)
 
-        self.renderer = QSvgRenderer('src/icon/drop_down.svg')
+        self.renderer = QSvgRenderer(':src/icon/drop_down.svg')
 
     def paintEvent(self, event):
         painter = QPainter(self)

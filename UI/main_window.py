@@ -14,8 +14,8 @@ from Widgets.Buttons.Button import Button
 from Widgets.Frame import BaseFrame
 from Widgets.Line import Line
 from UI.screen.home import Home
-from core.system.config import ICON_PATH, SETTINGS
 from core.signals.change_signals import signal_change
+from core.dataset import resources_rc
 
 
 class MainWindow(QMainWindow):
@@ -25,9 +25,9 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1300, 600)
         self.setMinimumSize(1300, 600)
         self.setWindowTitle('TimeLock')
-        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setWindowIcon(QIcon(":/src/icon.png"))
 
-        self.tray = QSystemTrayIcon(QIcon(ICON_PATH), self)
+        self.tray = QSystemTrayIcon(QIcon(":/src/icon.png"), self)
 
         menu = QMenu()
 
@@ -74,12 +74,12 @@ class MainWindow(QMainWindow):
         self.header.mainLayout.setSpacing(0)
 
         self.logo = QLabel()
-        img = QPixmap("src/image/TimeLock.png")
+        img = QPixmap(":/src/image/TimeLock.png")
         self.logo.setPixmap(img)
         self.logo.setScaledContents(True)
         self.logo.setFixedSize(64, 50)
 
-        self.cur_img_header = "src/icon/left_panel_close.svg"
+        self.cur_img_header = ":src/icon/left_panel_close.svg"
         self.button = Button("", min=33, svg_path=self.cur_img_header, ratio=28, scale=2, alpha=[0, 0, 0])
         self.button.clicked.connect(self.toggle_sideboard)
 
@@ -95,32 +95,32 @@ class MainWindow(QMainWindow):
         self.main = BaseFrame(border=0, box=QVBoxLayout())
         self.main.mainLayout.setContentsMargins(0, 0, 0, 0)
 
-        button_home = Button("Обзор", min=64, svg_path="src/icon/home.svg", ratio=28, scale=2, font_size=20,
+        button_home = Button("Обзор", min=64, svg_path=":src/icon/home.svg", ratio=28, scale=2, font_size=20,
                              radius=20, alpha=[0, 50, 100])
         button_home.setBackgroundHover()
         sidebar_buttons.append(button_home)
 
-        button_application = Button("Приложения", min=64, svg_path="src/icon/computer.svg", ratio=28, scale=2,
+        button_application = Button("Приложения", min=64, svg_path=":src/icon/computer.svg", ratio=28, scale=2,
                                     font_size=20, alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_application)
 
-        button_limit = Button("Лимиты", min=64, svg_path="src/icon/hourglass.svg", ratio=28, scale=2, font_size=20,
+        button_limit = Button("Лимиты", min=64, svg_path=":src/icon/hourglass.svg", ratio=28, scale=2, font_size=20,
                               alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_limit)
 
-        button_focus = Button("Фокус", min=64, svg_path="src/icon/focus.svg", ratio=28, scale=2, font_size=20,
+        button_focus = Button("Фокус", min=64, svg_path=":src/icon/focus.svg", ratio=28, scale=2, font_size=20,
                               alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_focus)
 
-        button_stat = Button("Статистика", min=64, svg_path="src/icon/statistic.svg", ratio=28, scale=2, font_size=20,
+        button_stat = Button("Статистика", min=64, svg_path=":src/icon/statistic.svg", ratio=28, scale=2, font_size=20,
                              alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_stat)
 
-        button_history = Button("История", min=64, svg_path="src/icon/history.svg", ratio=28, scale=2, font_size=20,
+        button_history = Button("История", min=64, svg_path=":src/icon/history.svg", ratio=28, scale=2, font_size=20,
                                 alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_history)
 
-        button_settings = Button("Настройки", min=64, svg_path="src/icon/settings.svg", ratio=28, scale=2,
+        button_settings = Button("Настройки", min=64, svg_path=":src/icon/settings.svg", ratio=28, scale=2,
                                  font_size=20, alpha=[0, 50, 100], radius=20)
         sidebar_buttons.append(button_settings)
 
@@ -157,12 +157,12 @@ class MainWindow(QMainWindow):
             start_width = self.sidebar.width()
             end_width = 55 if not self.is_small else 200
 
-            if self.cur_img_header == "src/icon/left_panel_open.svg":
-                self.button.setImage("src/icon/left_panel_close.svg")
-                self.cur_img_header = "src/icon/left_panel_close.svg"
+            if self.cur_img_header == ":src/icon/left_panel_open.svg":
+                self.button.setImage(":src/icon/left_panel_close.svg")
+                self.cur_img_header = ":src/icon/left_panel_close.svg"
             else:
-                self.button.setImage("src/icon/left_panel_open.svg")
-                self.cur_img_header = "src/icon/left_panel_open.svg"
+                self.button.setImage(":src/icon/left_panel_open.svg")
+                self.cur_img_header = ":src/icon/left_panel_open.svg"
 
             animation = QPropertyAnimation(self.sidebar, b"maximumWidth")
             animation.setDuration(300)

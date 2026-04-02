@@ -11,7 +11,7 @@ from core.command.category_command import get_category
 from core.command.focus_command import is_focus_allowed, set_focus_allowed
 from core.command.get_all_app import get_all_app, get_all_app_with_category
 from core.system.desktop import DesktopSize
-from core.system.config import FONT_FAMILY, ICON_PATH
+from core.system.config import FONT_FAMILY
 from core.db.session import SessionLocal
 
 
@@ -25,7 +25,7 @@ class FocusAllowedModal(QWidget):
 
         self.setFont(font)
         self.setWindowTitle("Разрешённые приложения")
-        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setWindowIcon(QIcon(":src/icon.png"))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         self.resize(500, 500)
@@ -57,7 +57,7 @@ class FocusAllowedModal(QWidget):
 
         proxy = QSortFilterProxyModel()
 
-        search = TextEdit(image="src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
+        search = TextEdit(image=":src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
         search.setMinimumWidth(250)
         search.setFixedHeight(40)
         search.textChanged.connect(proxy.setFilterFixedString)
@@ -123,9 +123,13 @@ class FocusAllowedModal(QWidget):
         if app_id is not None:
             set_focus_allowed(self.db_session, app_id)
             self.allowed_list = is_focus_allowed(self.db_session)
+            self.setData(self.allowed_list)
 
     def setData(self, allowed_list):
         self.model.clear()
+
+        if allowed_list is None:
+            allowed_list = []
 
         for name, id in self.apps:
             item = QStandardItem(name)

@@ -1,10 +1,10 @@
 from PySide6.QtWidgets import QMessageBox
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt
-from core.system.config import FONT_FAMILY, ICON_PATH
+from core.system.config import FONT_FAMILY
 
 
-def MessageTemplate(msg_icon: QMessageBox.Icon, text, title="Кнопка заблокирована", icon: QIcon = QIcon(ICON_PATH),
+def MessageTemplate(msg_icon: QMessageBox.Icon, text, title="Кнопка заблокирована", icon: QIcon = QIcon(":src/icon.png"),
                     standard_btn: QMessageBox.StandardButton = QMessageBox.StandardButton.Ok):
     msg = QMessageBox()
 

@@ -53,7 +53,8 @@ def get_history(session: Session):
             func.strftime('%Y-%m-%d %H:%M', last_session_subq.c.last_start) !=
             func.strftime('%Y-%m-%d %H:%M', last_session_subq.c.last_end),
             AppSession.start_time < now,
-            func.coalesce(AppSession.end_time, now) > today_start
+            func.coalesce(AppSession.end_time, now) > today_start,
+            App.status == "tracking"
         )
         .group_by(
             last_session_subq.c.last_end,

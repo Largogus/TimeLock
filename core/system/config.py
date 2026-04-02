@@ -1,11 +1,19 @@
+import sys
 from json import load
+from os import getenv
 from pathlib import Path
 from loguru import logger
 
 from core.signals.core_events import core_events
 
-CONFIG_PATH = Path("storage/config.json")
-ICON_PATH = Path("src/icon.png")
+
+def resource_path(relative_path: str) -> Path:
+    if getattr(sys, "_MEIPASS", False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parent.parent.parent
+
+    return base_path / relative_path
 
 
 def load_config() -> dict:
@@ -20,7 +28,6 @@ def load_config() -> dict:
         raise
 
     validate_config(config)
-    validate_path(ICON_PATH)
     return config
 
 
@@ -67,9 +74,15 @@ def refresh_settings():
     SETTINGS.update(new_settings)
 
 
+DATA_DIR = Path(getenv("APPDATA")) / "TimeLock"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = DATA_DIR / "tracker.db"
+
+CONFIG_PATH = resource_path("storage/config.json")
+
 _config = load_config()
 
-DATABASE_PATH = _config['database_url']
+DATABASE_PATH = _config['database_url'] + str(DB_PATH)
 
 SYSTEM_PROCESS = _config['system_process']
 
@@ -77,13 +90,11 @@ SYSTEM_CLASSES = _config['system_classes']
 
 FRIENDLY_PROCESS = _config['friendly_process']
 
-FRIENDLY_UWP = _config['friendly_uwp']
+SYSTEM_PATHS = _config['system_paths']
 
 FONT_FAMILY = _config["ui"]["font_family"]
 
 DEFAULT_SETTINGS = _config["default_settings"]
-
-ICON_PATH = str(ICON_PATH)
 
 SETTINGS = {}
 
@@ -95,8 +106,7 @@ __all__ = (
     "SYSTEM_PROCESS",
     "SYSTEM_CLASSES",
     'FRIENDLY_PROCESS',
-    "FRIENDLY_UWP",
+    "SYSTEM_PATHS",
     "FONT_FAMILY",
-    "ICON_PATH",
     "SETTINGS"
 )

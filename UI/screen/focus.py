@@ -12,14 +12,12 @@ from core.command.settings import set_settings
 from core.db.session import SessionLocal
 from core.signals.notification_signals import show_notification
 from core.system.config import SETTINGS
-from core.system.date import time_for_qt, parse_time
+from core.system.date import time_for_qt
 
 
 class Focus(QWidget):
     def __init__(self):
         super().__init__()
-
-        self.db_session = SessionLocal()
 
         layout = QVBoxLayout()
         layout.addSpacing(-20)
@@ -74,8 +72,6 @@ class Focus(QWidget):
 
         self.main.addLayout(Wrapper(self.timer))
 
-        self.main.mainLayout.addStretch()
-
         self.focus_allowed = Button(name="Разрешённые приложения", align=Qt.AlignmentFlag.AlignCenter, radius=8)
         self.focus_allowed.setMinimumWidth(400)
         self.focus_allowed.setBackgroundColor(QColor("#8fefae"))
@@ -83,6 +79,8 @@ class Focus(QWidget):
         self.focus_allowed.setBackgroundPressed(QColor("#baf8cd"))
 
         self.focus_allowed.clicked.connect(lambda: FocusAllowedModal().show())
+
+        self.main.mainLayout.addSpacing(30)
 
         self.focus_start = Button(name="Включить фокус", align=Qt.AlignmentFlag.AlignCenter, radius=8)
         self.focus_start.setMinimumWidth(400)
@@ -93,7 +91,7 @@ class Focus(QWidget):
 
         self.main.addLayout(Wrapper(self.focus_allowed))
 
-        self.main.mainLayout.addStretch()
+        self.main.mainLayout.addSpacing(8)
 
         self.main.addLayout(Wrapper(self.focus_start))
 
@@ -135,13 +133,15 @@ class Focus(QWidget):
 
             self.time.start(1000)
 
-        set_settings(self.db_session, 'focus', not focus_state, int)
+        with SessionLocal() as session:
+            set_settings(session, 'focus', int(not focus_state), int)
 
     def updTime(self):
         remaining = QDateTime.currentDateTime().secsTo(self.end_time)
 
         if remaining <= 0:
-            set_settings(self.db_session, 'focus', 0, int)
+            with SessionLocal() as session:
+                set_settings(session, 'focus', 0, int)
             show_notification.show_notification_focus_off.emit()
             self.time.stop()
         else:

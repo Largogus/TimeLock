@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from Widgets.ComboBoxes.PopUp import PopUp
 from core.command.category_command import get_category
 from core.system.desktop import DesktopSize
-from core.system.config import FONT_FAMILY, ICON_PATH
+from core.system.config import FONT_FAMILY
 from core.db.session import SessionLocal
 
 from core.widgets.change_category import changeCategory
@@ -20,7 +20,7 @@ class CategoryModal(QWidget):
 
         self.setFont(font)
         self.setWindowTitle("Изменение категории")
-        self.setWindowIcon(QIcon(ICON_PATH))
+        self.setWindowIcon(QIcon(":src/image.png"))
         self.setWindowFlags(Qt.WindowType.WindowStaysOnTopHint)
 
         palette = self.palette()

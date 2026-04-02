@@ -35,7 +35,6 @@ def addData(category_name: str) -> tuple[str, int, dict]:
             total_time += seconds
             app_name = s.app.name if s.app else "Unknown"
             top_apps[app_name] = top_apps.get(app_name, 0) + seconds
-            print(top_apps)
 
         text = f"Сегодня: {normal_time(total_time, format='short')} / Лимит: {normal_time(limits, format='short') if limits is not None else 'Нет'}"
 

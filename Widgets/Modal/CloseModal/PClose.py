@@ -1,9 +1,7 @@
-from PySide6.QtWidgets import QVBoxLayout, QLabel, QDialog
-from PySide6.QtGui import QFont, QPalette, QColor, QKeyEvent
+from PySide6.QtGui import QColor
 from PySide6.QtCore import Qt
 from Widgets.Buttons.Button import Button
 from Widgets.Modal.CloseModal.TemplateClose import TemplateClose
-from core.system.config import FONT_FAMILY
 
 
 class PCModal(TemplateClose):

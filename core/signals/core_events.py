@@ -7,5 +7,9 @@ class CoreEvents(QObject):
     show_visible = Signal()
     register_signal = Signal()
 
+    remove_category = Signal(str)
+    add_category = Signal(str)
+    rename_category = Signal(str, str)
+
 
 core_events = CoreEvents()

@@ -24,7 +24,7 @@ def show_disabled_message(text, title="Кнопка заблокирована")
     font = QFont(FONT_FAMILY, 12, QFont.Weight.Bold)
     msg.setFont(font)
 
-    msg.setWindowIcon(QIcon("src/icon/block.svg"))
+    msg.setWindowIcon(QIcon(":src/icon/block.svg"))
 
     msg.setWindowFlags(msg.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
 

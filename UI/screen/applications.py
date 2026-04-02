@@ -13,6 +13,7 @@ from core.command.block_app import add_block_app, is_blocked
 from core.command.category_command import get_category
 from core.dataset.roles import IdRole
 from core.db.session import SessionLocal
+from core.signals.core_events import core_events
 from core.statistic.middle_time import get_middle_time
 from core.thread.table.table_data_loader import TableDataLoader
 from core.widgets.sort_table import SortFilter
@@ -66,13 +67,19 @@ class Applications(QWidget):
 
         self.category = PopUp("Категории:")
 
-        self.category.addItems(get_category(self.db_session))
+        category_list = get_category(self.db_session)
+        self.category.addItems(category_list)
         self.category.currentTextChanged.connect(lambda: self.proxy_table.updateCategory(self.category.currentText()))
         self.category.close.connect(lambda: self.proxy_table.updateCategory(""))
 
+        core_events.remove_category.connect(lambda category: self.category.removeItem(
+            self.remove_for_index(category_list, category)))
+        core_events.add_category.connect(lambda category: self.add_item(category_list, category))
+        core_events.rename_category.connect(lambda last, new: self.rename_elm(category_list, last, new))
+
         button_header.append(self.category)
 
-        search = TextEdit(image="src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
+        search = TextEdit(image=":src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
         search.setMinimumWidth(250)
         search.textChanged.connect(lambda: self.proxy_table.updateName(search.text()))
         search.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -144,7 +151,6 @@ class Applications(QWidget):
 
         self.table.setMinimumWidth(1000)
 
-        # Более современный вид заголовка
         header_t = self.table.horizontalHeader()
         header_t.setHighlightSections(False)
         header_t.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignCenter)
@@ -303,3 +309,19 @@ class Applications(QWidget):
     def resizeEvent(self, event):
         self.appPanel.upd()
         super().resizeEvent(event)
+
+    def remove_for_index(self, lists: list, category):
+        zn = lists.index(category)
+        lists.pop(zn)
+        return zn
+
+    def add_item(self, lists: list, category):
+        lists.append(category)
+        self.category.addItem(category)
+
+    def rename_elm(self, lists: list, last, new):
+        inx = lists.index(last)
+        lists.pop(inx)
+        self.category.removeItem(inx)
+        lists.append(new)
+        self.category.addItem(new)

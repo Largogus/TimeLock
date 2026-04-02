@@ -1,3 +1,10 @@
+import sys
+
+from core.db.db_writer import db_writer
+from core.system.app_cache import app_cache
+from core.system.localServer import start_local_server, send_raise_signal
+from core.system.mutex import single_instance
+from os import getenv
 from PySide6.QtWidgets import QApplication, QStyleFactory, QMessageBox
 from Widgets.Modal.CloseModal.BlockedUser import BlockedUser
 from Widgets.Modal.CloseModal.LimitClose import LimitModal
@@ -17,8 +24,9 @@ from core.system.register import register_command
 from core.widgets.notification_manager import NotificationManager
 from core.widgets.thread_manager import thread_manager
 
-LOG_DIR = Path("logs")
-LOG_DIR.mkdir(exist_ok=True)
+
+LOG_DIR = Path(getenv("APPDATA")) / "TimeLock" / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 logger.add(LOG_DIR / 'log_{time:YYYY-MM-DD}.log',
            rotation="1 day",
@@ -44,6 +52,10 @@ def main():
     from core.system.config import FONT_FAMILY
     from core.system.config import SETTINGS, refresh_settings
 
+    if not single_instance.acquire():
+        send_raise_signal()
+        sys.exit(0)
+
     init_db()
 
     refresh_settings()
@@ -56,13 +68,15 @@ def main():
         app.setStyle("windows11")
     else:
         app.setStyle("windowsvista")
-        logger.debug("Стиль windows11 не найден")
+        logger.info("Стиль windows11 не найден")
 
     font = app.font()
     font.setFamily(FONT_FAMILY)
     app.setFont(font)
 
     window = main_window.MainWindow()
+
+    start_local_server(window)
 
     if not SETTINGS.get("in_tray", 0):
         window.show()
@@ -71,9 +85,15 @@ def main():
 
     core_events.register_signal.connect(register_command)
 
+    db_writer.start()
+    thread_manager.register_db_writer(db_writer)
+
     tracker = thread_manager.register(TrackerThread(SessionLocal))
 
     app_thread = SessionLocal()
+
+    app_cache.session_factory = SessionLocal
+    app_cache.load_all()
 
     signal.errorOccurred.connect(lambda error: logger.error(error))
     ui_events.show_limit_modal.connect(show_limit)
@@ -94,6 +114,7 @@ def main():
         exit(app.exec())
     finally:
         thread_manager.stop_all()
+        single_instance.release()
 
 
 def show_limit(name, hwnd):

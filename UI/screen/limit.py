@@ -170,9 +170,14 @@ class Limit(QWidget):
         category_limit_text.setPalette(palette_label)
         category_limit_text.setFont(category_limit_text_font)
 
+        categories = get_category(self.db_session)
         self.category_limit_popup = PopUp(placeholder="Выберите категорию")
-        self.category_limit_popup.addItems(get_category(self.db_session))
+        self.category_limit_popup.addItems(categories)
         self.category_limit_popup.currentTextChanged.connect(self.set_category_block)
+
+        core_events.remove_category.connect(lambda category: self.category_limit_popup.removeItem(self.remove_for_index(categories, category)))
+        core_events.add_category.connect(lambda category: self.add_item(categories, category))
+        core_events.rename_category.connect(lambda category, new: self.rename_elm(categories, category, new))
 
         self.category_limit_today = QLabel()
         self.category_limit_today.setText(f"Сегодня: —")
@@ -257,7 +262,7 @@ class Limit(QWidget):
         app_limit_text.setPalette(palette_label)
         app_limit_text.setFont(category_limit_text_font)
 
-        self.app_limit_text_edit = TextEdit(image="src/icon/search.svg", placeholder="Найти приложение...", ratio=0.60)
+        self.app_limit_text_edit = TextEdit(image=":src/icon/search.svg", placeholder="Найти приложение...", ratio=0.60)
         self.app_limit_text_edit.textChanged.connect(self.on_text_changed)
         self.app_limit_text_edit.setMinimumHeight(35)
         self.app_limit_text_edit.setMaximumWidth(336)
@@ -585,12 +590,28 @@ class Limit(QWidget):
 
         common_limit_str = normal_time(common_limit_time, "short")
 
-        today_time_str = normal_time(get_total_pc_time_today(self.db_session), "short")
+        today_time_str = normal_time(get_total_pc_time_today(), "short")
 
         signal_edit.edit_or_delete_common_limit.emit(common_limit_time)
 
         self.common_limit_text_db.setText(f"Сегодня: {today_time_str} из {common_limit_str}" if common_limit_time != 0 else "Без лимита")
         self.picker.setTime(time_for_qt(common_limit_time))
+
+    def remove_for_index(self, lists: list, category):
+        zn = lists.index(category)
+        lists.pop(zn)
+        return zn
+
+    def add_item(self, lists: list, category):
+        lists.append(category)
+        self.category_limit_popup.addItem(category)
+
+    def rename_elm(self, lists: list, last, new):
+        inx = lists.index(last)
+        lists.pop(inx)
+        self.category_limit_popup.removeItem(inx)
+        lists.append(new)
+        self.category_limit_popup.addItem(new)
 
 
 def update_completer(name, completer, app_list):

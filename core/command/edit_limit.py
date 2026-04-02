@@ -57,7 +57,6 @@ def delete_limit_app(db_session, app):
 
 def get_app_limit(db_session, app):
     app_obj = db_session.query(App).filter_by(name=app).first()
-    print(app_obj.limit)
 
     if app_obj.limit is None:
         return False, 0

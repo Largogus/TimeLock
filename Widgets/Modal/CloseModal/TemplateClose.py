@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QVBoxLayout, QLabel, QDialog
 from PySide6.QtGui import QFont, QPalette, QColor, QKeyEvent
 from PySide6.QtCore import Qt
-from Widgets.Buttons.Button import Button
 from core.system.config import FONT_FAMILY
 
 
@@ -38,6 +37,5 @@ class TemplateClose(QDialog):
     def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_F4 and event.modifiers() & Qt.KeyboardModifier.AltModifier:
             event.ignore()
-            print("Alt+F4 заблокирован")
         else:
             super().keyPressEvent(event)

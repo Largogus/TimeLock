@@ -74,7 +74,7 @@ class History(QWidget):
         self.title_left_part.setPalette(self.palette_label)
         self.title_left_part.setFont(self.font_label)
 
-        self.text_edit = TextEdit(image="src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
+        self.text_edit = TextEdit(image=":src/icon/search.svg", placeholder="Найти приложение...", ratio=0.40)
         self.text_edit.textChanged.connect(self.on_text_changed)
         self.text_edit.setMinimumHeight(35)
         self.text_edit.setMaximumWidth(1000)

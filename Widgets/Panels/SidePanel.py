@@ -2,7 +2,6 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QLabel
 from PySide6.QtGui import QColor, QFont
 from PySide6.QtCore import Qt
 from Widgets.Panels.PanelTemplate import PanelTemplate
-from core.db.session import SessionLocal
 from core.system.date import normal_time, plural
 from Widgets.Buttons.Button import Button
 from Widgets.Wrapper import Wrapper

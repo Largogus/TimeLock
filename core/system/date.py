@@ -83,7 +83,7 @@ def to_time(time: int, format: str = 'h') -> int:
     elif format == 'm':
         return (time % 3600) // 60
     else:
-        logger.debug("Неверный аргумент времени")
+        logger.error("Неверный аргумент времени")
 
 
 def parse_time(text: str) -> int:
